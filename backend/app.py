@@ -62,6 +62,22 @@ def create_app(config_class=Config):
             # Create any missing tables safely
             db.create_all()
 
+            # Safe schema column migrations for existing databases (SQLite & Postgres)
+            try:
+                from sqlalchemy import inspect, text
+                inspector = inspect(db.engine)
+                if 'users' in inspector.get_table_names():
+                    user_cols = [c['name'] for c in inspector.get_columns('users')]
+                    with db.engine.connect() as conn:
+                        if 'must_change_password' not in user_cols:
+                            conn.execute(text("ALTER TABLE users ADD COLUMN must_change_password BOOLEAN DEFAULT 0"))
+                            conn.commit()
+                        if 'last_login' not in user_cols:
+                            conn.execute(text("ALTER TABLE users ADD COLUMN last_login DATETIME"))
+                            conn.commit()
+            except Exception as mig_err:
+                app.logger.debug(f"Column migration status: {mig_err}")
+
             # Seed initial demo / admin users if database is newly initialized
             if not app.config.get('TESTING'):
                 from backend.models.user import User
@@ -99,9 +115,18 @@ def create_app(config_class=Config):
     app.register_blueprint(student_workspace_bp)
     app.register_blueprint(mongo_api_bp)
 
+    # CLI Commands
+    @app.cli.command('create-admin')
+    def create_admin_command():
+        """CLI command to safely create an administrative account."""
+        import click
+        from backend.cli import create_admin_account
+        username = click.prompt("Admin username", type=str)
+        email = click.prompt("Admin email", type=str)
+        password = click.prompt("Admin password", hide_input=True, confirmation_prompt=True)
+        fullname = click.prompt("Full name", default="System Administrator")
+        create_admin_account(username, email, password, fullname)
 
-
-    # Error handlers
     @app.errorhandler(404)
     def not_found_error(error):
         if request.is_json or request.path.startswith('/api/'):

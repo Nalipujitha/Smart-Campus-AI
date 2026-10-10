@@ -331,7 +331,6 @@
             placeholder="e.g. STU2024001 or stu_rahul" 
             required 
             autofocus
-            value="{{ demo_user or '' }}"
           >
         </div>
       </div>
@@ -347,7 +346,6 @@
             class="form-control" 
             placeholder="Enter your student password" 
             required
-            value="{{ demo_pass or '' }}"
           >
           <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('password', this)">👁️ Show</button>
         </div>
@@ -358,7 +356,7 @@
           <input type="checkbox" name="remember" value="1">
           <span>Remember this device</span>
         </label>
-        <span style="color: #64748b; font-size: 0.8rem;">Registry Support Active</span>
+        <a href="{{ url_for('auth.forgot_password') }}" style="color: var(--student-primary); text-decoration: none; font-weight: 600; font-size: 0.82rem;">Forgot Password?</a>
       </div>
 
       <button type="submit" class="btn-submit">
@@ -366,9 +364,9 @@
         <span>&rarr;</span>
       </button>
 
-      <div class="demo-hint">
-        <span>Demo Student: <strong>stu_rahul</strong> / <strong>Student@123</strong></span>
-        <button type="button" style="background: none; border: none; color: #047857; font-weight: 700; cursor: pointer; text-decoration: underline;" onclick="fillCredentials('stu_rahul', 'Student@123')">Auto-fill</button>
+      <div style="margin-top: 1.25rem; text-align: center; font-size: 0.88rem; color: #475569;">
+        <span>New Student?</span>
+        <a href="{{ url_for('auth.register') }}" style="color: var(--student-primary); font-weight: 700; text-decoration: underline; margin-left: 0.35rem;">Sign Up for an Account &rarr;</a>
       </div>
 
       <div class="portal-switch">
@@ -395,11 +393,6 @@
       input.type = 'password';
       btn.textContent = '👁️ Show';
     }
-  }
-
-  function fillCredentials(u, p) {
-    document.getElementById('username').value = u;
-    document.getElementById('password').value = p;
   }
 </script>
 

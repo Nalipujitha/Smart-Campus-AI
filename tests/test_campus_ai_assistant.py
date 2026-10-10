@@ -38,12 +38,28 @@ def client(test_app):
 @pytest.fixture
 def auth_student_client(test_app, client):
     """Log in as student STU2024001."""
-    with client.session_transaction() as sess:
+    with test_app.app_context():
         stu_user = User.query.filter_by(username='stu_rahul').first()
-        sess['user_id'] = stu_user.id if stu_user else 1
+        if not stu_user:
+            stu_user = User(
+                username='stu_rahul',
+                email='stu_rahul@campus.edu',
+                full_name='Rahul Sharma',
+                role='Student',
+                student_id='STU2024001'
+            )
+            stu_user.set_password('Student@123')
+            db.session.add(stu_user)
+            db.session.commit()
+        uid = stu_user.id
+        uname = stu_user.username
+        sid = stu_user.student_id
+
+    with client.session_transaction() as sess:
+        sess['user_id'] = uid
         sess['role'] = 'Student'
-        sess['username'] = 'stu_rahul'
-        sess['student_id'] = 'STU2024001'
+        sess['username'] = uname
+        sess['student_id'] = sid
     return client
 
 

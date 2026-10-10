@@ -274,7 +274,6 @@
             placeholder="admin or admin@campus.edu" 
             required 
             autofocus
-            value="{{ demo_user or '' }}"
           >
         </div>
       </div>
@@ -290,21 +289,19 @@
             class="form-control" 
             placeholder="Enter administrative credentials" 
             required
-            value="{{ demo_pass or '' }}"
           >
           <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('password', this)">👁️ Show</button>
         </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 1.25rem;">
+        <a href="{{ url_for('auth.forgot_password') }}" style="color: #fbbf24; text-decoration: none; font-size: 0.82rem; font-weight: 600;">Forgot Password?</a>
       </div>
 
       <button type="submit" class="btn-submit">
         <span>Authenticate as Administrator</span>
         <span>&rarr;</span>
       </button>
-
-      <div class="notice-box">
-        <span>🔐 Demo Administrator: <strong>admin</strong> / <strong>Admin@123</strong></span>
-        <button type="button" style="margin-left: auto; background: none; border: none; color: #f59e0b; font-weight: 700; cursor: pointer; text-decoration: underline;" onclick="fillCredentials('admin', 'Admin@123')">Auto-fill</button>
-      </div>
 
       <div class="portal-switch">
         <span>Looking for other campus portals?</span><br>
@@ -330,11 +327,6 @@
       input.type = 'password';
       btn.textContent = '👁️ Show';
     }
-  }
-
-  function fillCredentials(u, p) {
-    document.getElementById('username').value = u;
-    document.getElementById('password').value = p;
   }
 </script>
 

@@ -17,6 +17,7 @@ from backend.services.success_score import SuccessScoreService
 from backend.services.attendance_service import AttendanceService
 from backend.services.risk_analysis import RiskAnalysisService
 from backend.extensions import db
+from backend.utils.security import validate_password_strength, validate_username, validate_email
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -537,14 +538,38 @@ def users():
         email = request.form.get('email', '').strip().lower()
         role = request.form.get('role', 'Faculty')
         dept = request.form.get('department')
-        password = request.form.get('password', 'Password@123')
+        password = request.form.get('password', '').strip()
+        must_change = request.form.get('must_change_password') == '1'
 
         if not username or not full_name or not email or not role:
-            flash("All user fields are required.", "danger")
+            flash("Full Name, Username, Email, and Role are required.", "danger")
+            return redirect(url_for('admin.users'))
+
+        valid_u, u_err = validate_username(username)
+        if not valid_u:
+            flash(u_err, "danger")
+            return redirect(url_for('admin.users'))
+
+        valid_e, e_err = validate_email(email)
+        if not valid_e:
+            flash(e_err, "danger")
+            return redirect(url_for('admin.users'))
+
+        if not password:
+            password = "TempPassword@123"
+            must_change = True
+
+        valid_p, p_err = validate_password_strength(password)
+        if not valid_p:
+            flash(f"Password error: {p_err}", "danger")
             return redirect(url_for('admin.users'))
 
         if User.query.filter_by(username=username).first():
             flash(f"Username '{username}' is already taken.", "danger")
+            return redirect(url_for('admin.users'))
+
+        if User.query.filter_by(email=email).first():
+            flash(f"Email '{email}' is already registered with another account.", "danger")
             return redirect(url_for('admin.users'))
 
         new_user = User(
@@ -553,7 +578,8 @@ def users():
             email=email,
             role=role,
             department=dept if role in ['Faculty', 'Student'] else None,
-            is_active=True
+            is_active=True,
+            must_change_password=must_change
         )
         new_user.set_password(password)
         db.session.add(new_user)
@@ -576,6 +602,83 @@ def users():
         users=all_users,
         departments=DEPARTMENTS
     )
+
+@admin_bp.route('/users/<int:user_id>/toggle-status', methods=['POST'])
+@login_required
+@roles_required('Admin')
+def toggle_user_status(user_id):
+    admin_user = get_current_user()
+    target_user = User.query.get_or_404(user_id)
+
+    if target_user.id == admin_user.id:
+        flash("You cannot deactivate your own administrative account.", "danger")
+        return redirect(url_for('admin.users'))
+
+    target_user.is_active = not target_user.is_active
+    db.session.add(AuditEvent(
+        user_id=admin_user.id,
+        action="TOGGLE_USER_STATUS",
+        module="User Management",
+        details=f"Admin toggled active status for user {target_user.username} to {target_user.is_active}.",
+        ip_address=request.remote_addr
+    ))
+    db.session.commit()
+    flash(f"User '{target_user.username}' is now {'Active' if target_user.is_active else 'Disabled'}.", "info")
+    return redirect(url_for('admin.users'))
+
+@admin_bp.route('/users/<int:user_id>/reset-password', methods=['POST'])
+@login_required
+@roles_required('Admin')
+def reset_user_password(user_id):
+    admin_user = get_current_user()
+    target_user = User.query.get_or_404(user_id)
+    new_temp_pass = request.form.get('new_password', '').strip()
+
+    if not new_temp_pass:
+        new_temp_pass = "TempPassword@123"
+
+    valid_p, p_err = validate_password_strength(new_temp_pass)
+    if not valid_p:
+        flash(f"Password error: {p_err}", "danger")
+        return redirect(url_for('admin.users'))
+
+    target_user.set_password(new_temp_pass)
+    target_user.must_change_password = True
+
+    db.session.add(AuditEvent(
+        user_id=admin_user.id,
+        action="ADMIN_RESET_PASSWORD",
+        module="User Management",
+        details=f"Admin reset temporary password for user {target_user.username}.",
+        ip_address=request.remote_addr
+    ))
+    db.session.commit()
+    flash(f"Password for '{target_user.username}' was reset. Temporary password required on next login.", "success")
+    return redirect(url_for('admin.users'))
+
+@admin_bp.route('/users/<int:user_id>/delete', methods=['POST'])
+@login_required
+@roles_required('Admin')
+def delete_user(user_id):
+    admin_user = get_current_user()
+    target_user = User.query.get_or_404(user_id)
+
+    if target_user.id == admin_user.id:
+        flash("You cannot delete your own administrative account.", "danger")
+        return redirect(url_for('admin.users'))
+
+    username = target_user.username
+    db.session.delete(target_user)
+    db.session.add(AuditEvent(
+        user_id=admin_user.id,
+        action="DELETE_USER",
+        module="User Management",
+        details=f"Admin deleted user account {username}.",
+        ip_address=request.remote_addr
+    ))
+    db.session.commit()
+    flash(f"User account '{username}' has been deleted.", "warning")
+    return redirect(url_for('admin.users'))
 
 # =====================================================================
 # 10. AUDIT LOGS

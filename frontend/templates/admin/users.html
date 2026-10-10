@@ -29,6 +29,8 @@
             <th>Role</th>
             <th>Department</th>
             <th>Status</th>
+            <th>Security Status</th>
+            <th style="text-align: right;">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -57,6 +59,39 @@
                 <span class="badge badge-danger">Disabled</span>
               {% endif %}
             </td>
+            <td>
+              {% if u.must_change_password %}
+                <span class="badge badge-warning">Temp Password</span>
+              {% else %}
+                <span class="badge badge-secondary">Standard</span>
+              {% endif %}
+            </td>
+            <td style="text-align: right;">
+              <div style="display: inline-flex; gap: 0.4rem; justify-content: flex-end;">
+                <!-- Toggle Active Status Form -->
+                {% if u.id != user.id %}
+                <form method="POST" action="{{ url_for('admin.toggle_user_status', user_id=u.id) }}" style="display: inline;">
+                  <button type="submit" class="btn btn-sm {% if u.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}" title="Toggle Active/Disabled" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">
+                    {% if u.is_active %}Deactivate{% else %}Activate{% endif %}
+                  </button>
+                </form>
+
+                <!-- Reset Password Trigger -->
+                <button type="button" onclick="openResetModal('{{ u.id }}', '{{ u.username }}')" class="btn btn-sm btn-outline-primary" title="Reset Password" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">
+                  Reset Pass
+                </button>
+
+                <!-- Delete User Form -->
+                <form method="POST" action="{{ url_for('admin.delete_user', user_id=u.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to permanently delete user account {{ u.username }}?');">
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete User" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">
+                    Delete
+                  </button>
+                </form>
+                {% else %}
+                <span style="font-size: 0.75rem; color: #64748b; font-style: italic;">Current Session</span>
+                {% endif %}
+              </div>
+            </td>
           </tr>
           {% endfor %}
         </tbody>
@@ -68,13 +103,13 @@
 
 <!-- Create User Modal Dialog -->
 <div id="addUserModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 999; overflow-y: auto;">
-  <div style="background: white; border-radius: 12px; max-width: 500px; margin: 4rem auto; padding: 1.75rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);">
+  <div style="background: white; border-radius: 12px; max-width: 500px; margin: 3rem auto; padding: 1.75rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-      <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">Create User Account</h3>
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">Create Authorized Account</h3>
       <button onclick="document.getElementById('addUserModal').style.display='none'" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #64748b;">✕</button>
     </div>
 
-    <form method="POST" action="{{ url_for('admin.users') }}" style="display: flex; flex-direction: column; gap: 1rem;">
+    <form method="POST" action="{{ url_for('admin.users') }}" style="display: flex; flex-direction: column; gap: 0.9rem;">
       <div>
         <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Full Name *</label>
         <input type="text" name="full_name" placeholder="Full Name" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
@@ -82,7 +117,7 @@
 
       <div>
         <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Username *</label>
-        <input type="text" name="username" placeholder="username" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+        <input type="text" name="username" placeholder="e.g. dr.patel, placement_lead" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
       </div>
 
       <div>
@@ -93,9 +128,9 @@
       <div>
         <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">System Role *</label>
         <select name="role" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
-          <option value="Admin">Administrator</option>
           <option value="Faculty">Faculty / Advisor</option>
           <option value="Placement_Officer">Placement Officer</option>
+          <option value="Admin">Administrator</option>
           <option value="Student">Student</option>
         </select>
       </div>
@@ -111,8 +146,13 @@
       </div>
 
       <div>
-        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Password</label>
-        <input type="password" name="password" value="Password@123" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Initial Password (Min 8 chars, 1 upper, 1 lower, 1 digit, 1 special)</label>
+        <input type="password" name="password" placeholder="e.g. CampusSecure@2026" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+        <input type="checkbox" id="must_change_cb" name="must_change_password" value="1" checked>
+        <label for="must_change_cb" style="font-size: 0.82rem; color: #475569; cursor: pointer;">Require user to change password on first login</label>
       </div>
 
       <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
@@ -122,4 +162,39 @@
     </form>
   </div>
 </div>
+
+<!-- Admin Reset Password Modal Dialog -->
+<div id="resetPassModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 999; overflow-y: auto;">
+  <div style="background: white; border-radius: 12px; max-width: 440px; margin: 5rem auto; padding: 1.75rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">Reset User Password</h3>
+      <button onclick="document.getElementById('resetPassModal').style.display='none'" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #64748b;">✕</button>
+    </div>
+
+    <form id="resetPassForm" method="POST" action="" style="display: flex; flex-direction: column; gap: 1rem;">
+      <p style="font-size: 0.85rem; color: #475569; margin: 0;">
+        Resetting password for user: <strong id="resetTargetUsername" style="color: #0284c7;"></strong>
+      </p>
+
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">New Temporary Password *</label>
+        <input type="password" name="new_password" required placeholder="e.g. TempSecure@2026" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+        <span style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem; display: block;">Must contain 8+ chars with uppercase, lowercase, digit, and special char.</span>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem;">
+        <button type="button" onclick="document.getElementById('resetPassModal').style.display='none'" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save & Require Change</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openResetModal(userId, username) {
+    document.getElementById('resetTargetUsername').textContent = username;
+    document.getElementById('resetPassForm').action = "/admin/users/" + userId + "/reset-password";
+    document.getElementById('resetPassModal').style.display = 'block';
+  }
+</script>
 {% endblock %}

@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,6 +27,12 @@ class Config:
         SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(BASE_DIR, 'database', 'smart_campus.db')}"
         
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # Session Cookie & Security Configuration
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False').lower() in ('true', '1')
+    PERMANENT_SESSION_LIFETIME = 86400  # 24 hours
     
     # Upload folder
     UPLOAD_FOLDER = os.path.join(BASE_DIR, 'database', 'data')

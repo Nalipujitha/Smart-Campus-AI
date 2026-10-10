@@ -77,14 +77,32 @@
           </tr>
         </thead>
         <tbody>
+          {% for d in summary.department_academic_stats if summary.department_academic_stats %}
+          <tr>
+            <td style="font-weight: 600;">{{ d.name }}</td>
+            <td>{{ d.avg_internal }} / 30</td>
+            <td>{{ d.avg_external }} / 70</td>
+            <td style="font-weight: 700; color: #0284c7;">{{ d.mean_cgpa }}</td>
+            <td>
+              {% if d.pass_rate >= 90 %}
+                <span class="badge badge-success">{{ d.pass_rate }}%</span>
+              {% elif d.pass_rate >= 75 %}
+                <span class="badge badge-warning">{{ d.pass_rate }}%</span>
+              {% else %}
+                <span class="badge badge-danger">{{ d.pass_rate }}%</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
           {% for d in departments %}
           <tr>
             <td style="font-weight: 600;">{{ d }}</td>
-            <td>24.8 / 30</td>
-            <td>56.2 / 70</td>
-            <td style="font-weight: 700; color: #0284c7;">8.10</td>
-            <td><span class="badge badge-success">94.2%</span></td>
+            <td>— / 30</td>
+            <td>— / 70</td>
+            <td style="font-weight: 700; color: #0284c7;">—</td>
+            <td><span class="badge badge-info">No Data</span></td>
           </tr>
+          {% endfor %}
           {% endfor %}
         </tbody>
       </table>

@@ -88,6 +88,25 @@ def test_admin_portal_operations(client, app):
     assert resp.mimetype == "text/csv"
     assert b"STU_NEW_999" in resp.data
 
+    # View Academic Analytics
+    resp_analytics = client.get('/admin/analytics')
+    assert resp_analytics.status_code == 200
+    assert b"Institutional Academic Analytics" in resp_analytics.data
+    assert b"Institutional Mean GPA" in resp_analytics.data
+
+    client.get('/logout')
+
+
+def test_admin_academic_analytics_view(client):
+    """Verify /admin/analytics renders real academic summary metrics without UndefinedError."""
+    login_client(client, 'test_admin', 'Admin@123')
+    resp = client.get('/admin/analytics')
+    assert resp.status_code == 200
+    assert b"Institutional Mean GPA" in resp.data
+    assert b"Passing Rate" in resp.data
+    assert b"Standing Backlogs" in resp.data
+    assert b"Dean's Honor Roll" in resp.data
+    assert b"Department Academic Comparison" in resp.data
     client.get('/logout')
 
 

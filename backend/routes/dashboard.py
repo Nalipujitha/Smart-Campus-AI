@@ -14,6 +14,7 @@ from backend.models.placement import PlacementProfile, PracticeAttempt
 from backend.models.learning import LearningPlan, LearningTask, LmsActivity
 from backend.models.recommendation import Recommendation
 from backend.models.user import User
+from backend.extensions import db
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -40,13 +41,33 @@ def index():
 def student_dashboard():
     user = get_current_user()
 
+    # If an Admin/Faculty/Placement officer lands here, allow them to view sample/selected student
+    # but for Student role, strictly isolate to their own student profile
     student = None
     if user.student_id:
         student = Student.query.filter_by(student_id=user.student_id).first()
     
-    # Fallback if student account is not linked to student_id yet
-    if not student:
+    if not student and user.role != 'Student':
         student = Student.query.first()
+    elif not student and user.role == 'Student':
+        # Create dedicated profile for this registered student
+        names = (user.full_name or 'Student User').split(' ', 1)
+        student = Student(
+            student_id=user.student_id or f"STU{user.id:04d}",
+            first_name=names[0],
+            last_name=names[1] if len(names) > 1 else names[0],
+            email=user.email,
+            department=user.department or 'Computer Science & Engineering',
+            academic_year=1,
+            semester=1,
+            section='A',
+            status='Active',
+            enrollment_date=date.today()
+        )
+        db.session.add(student)
+        if not user.student_id:
+            user.student_id = student.student_id
+        db.session.commit()
 
     student_data = {}
     if student:

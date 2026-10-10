@@ -267,7 +267,6 @@
             placeholder="e.g. placement_officer or placement@campus.edu" 
             required 
             autofocus
-            value="{{ demo_user or '' }}"
           >
         </div>
       </div>
@@ -283,21 +282,19 @@
             class="form-control" 
             placeholder="Enter placement credentials" 
             required
-            value="{{ demo_pass or '' }}"
           >
           <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('password', this)">👁️ Show</button>
         </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 1.25rem;">
+        <a href="{{ url_for('auth.forgot_password') }}" style="color: #0284c7; text-decoration: none; font-size: 0.82rem; font-weight: 600;">Forgot Password?</a>
       </div>
 
       <button type="submit" class="btn-submit">
         <span>Access Placement Command Center</span>
         <span>&rarr;</span>
       </button>
-
-      <div class="demo-hint">
-        <span>Demo Officer: <strong>placement_officer</strong> / <strong>Placement@123</strong></span>
-        <button type="button" style="background: none; border: none; color: #0284c7; font-weight: 700; cursor: pointer; text-decoration: underline;" onclick="fillCredentials('placement_officer', 'Placement@123')">Auto-fill</button>
-      </div>
 
       <div class="portal-switch">
         <span>Looking for another portal?</span><br>
@@ -323,11 +320,6 @@
       input.type = 'password';
       btn.textContent = '👁️ Show';
     }
-  }
-
-  function fillCredentials(u, p) {
-    document.getElementById('username').value = u;
-    document.getElementById('password').value = p;
   }
 </script>
 

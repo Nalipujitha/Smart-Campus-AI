@@ -12,8 +12,10 @@ class User(db.Model):
     full_name = db.Column(db.String(120), nullable=False)
     role = db.Column(db.String(32), nullable=False, default='Student') # Admin, Faculty, Placement_Officer, Student
     department = db.Column(db.String(64), nullable=True) # CSE, ECE, MECH, CIVIL, IT, AI_DS, MANAGEMENT
-    student_id = db.Column(db.String(32), db.ForeignKey('students.student_id', ondelete='SET NULL'), nullable=True)
+    student_id = db.Column(db.String(32), db.ForeignKey('students.student_id', ondelete='SET NULL'), unique=True, nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
+    must_change_password = db.Column(db.Boolean, default=False, nullable=False)
+    last_login = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationships
@@ -36,5 +38,8 @@ class User(db.Model):
             'department': self.department,
             'student_id': self.student_id,
             'is_active': self.is_active,
+            'must_change_password': self.must_change_password,
+            'last_login': self.last_login.isoformat() if self.last_login else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+

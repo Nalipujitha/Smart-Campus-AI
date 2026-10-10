@@ -36,14 +36,40 @@ def client(test_app):
 @pytest.fixture
 def auth_student_client(test_app, client):
     """Log in as student STU2024001."""
-    with client.session_transaction() as sess:
+    with test_app.app_context():
         stu_user = User.query.filter_by(username='stu_rahul').first()
         if not stu_user:
-            stu_user = User.query.filter_by(role='Student').first()
-        sess['user_id'] = stu_user.id if stu_user else 1
+            stu = Student.query.filter_by(student_id='STU2024001').first()
+            if not stu:
+                stu = Student(
+                    student_id='STU2024001',
+                    first_name='Rahul',
+                    last_name='Sharma',
+                    email='stu_rahul@campus.edu',
+                    department='Computer Science & Engineering',
+                    academic_year=2,
+                    semester=3
+                )
+                db.session.add(stu)
+            stu_user = User(
+                username='stu_rahul',
+                email='stu_rahul@campus.edu',
+                full_name='Rahul Sharma',
+                role='Student',
+                student_id='STU2024001'
+            )
+            stu_user.set_password('Student@123')
+            db.session.add(stu_user)
+            db.session.commit()
+        uid = stu_user.id
+        uname = stu_user.username
+        sid = stu_user.student_id
+
+    with client.session_transaction() as sess:
+        sess['user_id'] = uid
         sess['role'] = 'Student'
-        sess['username'] = stu_user.username if stu_user else 'stu_rahul'
-        sess['student_id'] = stu_user.student_id if (stu_user and stu_user.student_id) else 'STU2024001'
+        sess['username'] = uname
+        sess['student_id'] = sid
     return client
 
 
@@ -221,9 +247,23 @@ def test_draft_save_and_retrieve_isolation(test_app, client):
         prob = CodingProblem.query.first()
         prob_id = prob.id
 
+        u1 = User.query.filter_by(student_id='STU2024001').first()
+        if not u1:
+            u1 = User(username='stu1', email='stu1@campus.edu', full_name='Student 1', role='Student', student_id='STU2024001')
+            u1.set_password('Student@123')
+            db.session.add(u1)
+        u2 = User.query.filter_by(student_id='STU2024002').first()
+        if not u2:
+            u2 = User(username='stu2', email='stu2@campus.edu', full_name='Student 2', role='Student', student_id='STU2024002')
+            u2.set_password('Student@123')
+            db.session.add(u2)
+        db.session.commit()
+        u1_id = u1.id
+        u2_id = u2.id
+
     # Save draft for Student 1
     with client.session_transaction() as sess:
-        sess['user_id'] = 1
+        sess['user_id'] = u1_id
         sess['role'] = 'Student'
         sess['student_id'] = 'STU2024001'
 
@@ -239,7 +279,7 @@ def test_draft_save_and_retrieve_isolation(test_app, client):
 
     # Switch session to Student 2
     with client.session_transaction() as sess:
-        sess['user_id'] = 2
+        sess['user_id'] = u2_id
         sess['role'] = 'Student'
         sess['student_id'] = 'STU2024002'
 
