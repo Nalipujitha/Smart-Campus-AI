@@ -14,10 +14,17 @@ else:
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'smart-campus-super-secret-key-2026-prod-ready')
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'DATABASE_URI',
-        f"sqlite:///{os.path.join(BASE_DIR, 'database', 'smart_campus.db')}"
-    )
+    
+    # Handle both DATABASE_URL (standard Render env var) and DATABASE_URI
+    _db_uri = os.environ.get('DATABASE_URL') or os.environ.get('DATABASE_URI')
+    if _db_uri:
+        # Render PostgreSQL URIs start with postgres://, but SQLAlchemy requires postgresql://
+        if _db_uri.startswith('postgres://'):
+            _db_uri = _db_uri.replace('postgres://', 'postgresql://', 1)
+        SQLALCHEMY_DATABASE_URI = _db_uri
+    else:
+        SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(BASE_DIR, 'database', 'smart_campus.db')}"
+        
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Upload folder

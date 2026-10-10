@@ -46,6 +46,31 @@ def create_app(config_class=Config):
     # Initialize extensions
     db.init_app(app)
 
+    # Ensure database tables and initial required schema are created on startup (Render / Docker / Local)
+    with app.app_context():
+        try:
+            db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+            if db_uri.startswith('sqlite:///') and not db_uri.startswith('sqlite:///:memory:'):
+                db_path = db_uri.replace('sqlite:///', '')
+                if not os.path.isabs(db_path):
+                    db_path = os.path.join(BASE_DIR, db_path)
+                os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
+
+            # Import all models to register them in SQLAlchemy metadata
+            import backend.models  # noqa: F401
+
+            # Create any missing tables safely
+            db.create_all()
+
+            # Seed initial demo / admin users if database is newly initialized
+            if not app.config.get('TESTING'):
+                from backend.models.user import User
+                if User.query.first() is None:
+                    from database.seed_data import seed_database
+                    seed_database(app)
+        except Exception as e:
+            app.logger.warning(f"Database startup initialization note: {e}")
+
     # Context processors
     @app.context_processor
     def inject_globals():

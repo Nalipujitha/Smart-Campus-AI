@@ -22,13 +22,16 @@ def init_database(app=None):
         db.init_app(app)
 
     with app.app_context():
-        # Ensure database directory exists
-        db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
-        if db_path != ':memory:':
+        # Ensure database directory exists if SQLite
+        db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+        if db_uri.startswith('sqlite:///') and not db_uri.startswith('sqlite:///:memory:'):
+            db_path = db_uri.replace('sqlite:///', '')
+            if not os.path.isabs(db_path):
+                db_path = os.path.join(BASE_DIR, db_path)
             os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
 
         db.create_all()
-        print("Database schema successfully created/verified at:", app.config['SQLALCHEMY_DATABASE_URI'])
+        print("Database schema successfully created/verified at:", db_uri)
 
 if __name__ == '__main__':
     init_database()
