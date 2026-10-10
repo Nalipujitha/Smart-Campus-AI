@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Department Analytics & Terms - Admin Portal{% endblock %}
+{% block header_title %}Department Analytics & Structure{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Department Performance Cards -->
+  <div class="metrics-grid">
+    {% for dept in dept_stats %}
+    <div class="card" style="margin-bottom: 0;">
+      <div class="card-header" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem;">
+        <span class="card-title" style="font-size: 1rem; color: #0f172a;">{{ dept.name }}</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+        <div>
+          <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase;">Students</div>
+          <div style="font-size: 1.3rem; font-weight: 700; color: #0284c7;">{{ dept.students_count }}</div>
+        </div>
+        <div>
+          <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase;">Faculty</div>
+          <div style="font-size: 1.3rem; font-weight: 700; color: #7c3aed;">{{ dept.faculty_count }}</div>
+        </div>
+        <div>
+          <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase;">Avg Attendance</div>
+          <div style="font-size: 1.3rem; font-weight: 700; color: #16a34a;">{{ dept.avg_attendance }}%</div>
+        </div>
+        <div>
+          <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase;">Avg CGPA</div>
+          <div style="font-size: 1.3rem; font-weight: 700; color: #0f172a;">{{ dept.avg_gpa }}</div>
+        </div>
+      </div>
+      <div style="margin-top: 1.25rem; border-top: 1px solid #f1f5f9; padding-top: 0.75rem; display: flex; justify-content: space-between;">
+        <a href="{{ url_for('admin.students', department=dept.name) }}" class="btn btn-secondary btn-sm" style="width: 48%; text-align: center;">View Students</a>
+        <a href="{{ url_for('admin.attendance', department=dept.name) }}" class="btn btn-secondary btn-sm" style="width: 48%; text-align: center;">Attendance</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

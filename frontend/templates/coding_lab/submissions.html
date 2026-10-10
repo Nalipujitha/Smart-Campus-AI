@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}My Submissions - Coding Lab{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coding_lab.css') }}">
+
+<div class="student-dashboard-wrapper">
+  
+  <!-- 1. Header & Navigation -->
+  <div class="coding-lab-header">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+        <span class="badge" style="background: #2563eb; color: #fff; font-size: 0.72rem;">CODING LAB</span>
+        <span style="font-size: 0.8rem; color: #94a3b8;">Submission Log & Execution Analytics</span>
+      </div>
+      <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin: 0;">
+        My Coding Submissions 📜
+      </h2>
+      <p style="color: #94a3b8; font-size: 0.88rem; margin: 0.25rem 0 0 0;">
+        Track all your code runs, test outcomes, execution performance, and score progressions.
+      </p>
+    </div>
+
+    <!-- Navigation Pills -->
+    <div class="coding-nav-pills">
+      <a href="{{ url_for('coding_lab.dashboard') }}">
+        📊 Overview
+      </a>
+      <a href="{{ url_for('coding_lab.practice_catalog') }}">
+        🧩 Practice Problems
+      </a>
+      <a href="{{ url_for('coding_lab.submissions_list') }}" class="active">
+        📜 Submissions
+      </a>
+      <a href="{{ url_for('coding_lab.progress_view') }}">
+        📈 Topic Mastery
+      </a>
+    </div>
+  </div>
+
+  <!-- 2. Submissions Table Card -->
+  <div class="card" style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1.25rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h3 style="font-size: 1.1rem; font-weight: 600; color: #f0f6fc; margin: 0;">
+        Total Submissions ({{ submissions|length }})
+      </h3>
+    </div>
+
+    {% if submissions %}
+    <div class="table-responsive">
+      <table class="table" style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+        <thead>
+          <tr style="border-bottom: 1px solid #30363d; color: #8b949e; text-align: left;">
+            <th style="padding: 0.75rem 1rem;">ID</th>
+            <th style="padding: 0.75rem 1rem;">Problem</th>
+            <th style="padding: 0.75rem 1rem;">Status</th>
+            <th style="padding: 0.75rem 1rem;">Passed Cases</th>
+            <th style="padding: 0.75rem 1rem;">Score</th>
+            <th style="padding: 0.75rem 1rem;">Language</th>
+            <th style="padding: 0.75rem 1rem;">Runtime</th>
+            <th style="padding: 0.75rem 1rem;">Submitted At</th>
+            <th style="padding: 0.75rem 1rem; text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sub in submissions %}
+          <tr style="border-bottom: 1px solid #21262d; color: #c9d1d9;">
+            <td style="padding: 0.75rem 1rem; color: #8b949e;">#{{ sub.id }}</td>
+            <td style="padding: 0.75rem 1rem; font-weight: 600;">
+              <a href="{{ url_for('coding_lab.editor_view', identifier=sub.problem.slug if sub.problem else sub.problem_id) }}" style="color: #58a6ff; text-decoration: none;">
+                {{ sub.problem.title if sub.problem else 'Problem #' ~ sub.problem_id }}
+              </a>
+            </td>
+            <td style="padding: 0.75rem 1rem;">
+              <span class="badge" style="background: {{ '#238636' if sub.status == 'Accepted' else '#da3633' }}; color: #fff; font-size: 0.75rem;">
+                {{ sub.status }}
+              </span>
+            </td>
+            <td style="padding: 0.75rem 1rem;">
+              {{ sub.passed_test_cases }} / {{ sub.total_test_cases }}
+            </td>
+            <td style="padding: 0.75rem 1rem; font-weight: 600; color: #f0f6fc;">
+              {{ sub.score }} pts
+            </td>
+            <td style="padding: 0.75rem 1rem; text-transform: capitalize;">
+              {{ sub.language }}
+            </td>
+            <td style="padding: 0.75rem 1rem;">
+              {{ sub.execution_time_ms }} ms
+            </td>
+            <td style="padding: 0.75rem 1rem; color: #8b949e;">
+              {{ sub.submitted_at.strftime('%Y-%m-%d %H:%M') if sub.submitted_at else 'Recent' }}
+            </td>
+            <td style="padding: 0.75rem 1rem; text-align: right;">
+              <a href="{{ url_for('coding_lab.editor_view', identifier=sub.problem.slug if sub.problem else sub.problem_id) }}" class="btn btn-secondary btn-sm" style="font-size: 0.78rem; padding: 0.25rem 0.6rem;">
+                Open in Editor
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 3rem; color: #8b949e;">
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📜</div>
+      <p style="margin: 0 0 1rem 0;">No coding submissions recorded yet.</p>
+      <a href="{{ url_for('coding_lab.practice_catalog') }}" class="btn btn-primary btn-sm" style="background: #2563eb; border: none;">
+        Start Practicing
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

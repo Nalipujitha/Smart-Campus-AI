@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Faculty Reports & CSV Export - Faculty Portal{% endblock %}
+{% block header_title %}Class Reports & Grade Sheet Exports{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <div class="metrics-grid">
+    <!-- Class Attendance CSV Export -->
+    <div class="card" style="margin-bottom: 0;">
+      <div class="card-header">
+        <span class="card-title">📅 Class Attendance Sheet</span>
+      </div>
+      <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; margin-bottom: 1.25rem;">
+        Export attendance summary for students in {{ department }}, including total sessions, present, absent, and percentage.
+      </p>
+      <a href="{{ url_for('faculty.export_csv', report_type='attendance') }}" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center;">
+        📥 Download Attendance CSV
+      </a>
+    </div>
+
+    <!-- Subject Grade Sheet Export -->
+    <div class="card" style="margin-bottom: 0;">
+      <div class="card-header">
+        <span class="card-title">📝 Subject Grade Sheet</span>
+      </div>
+      <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; margin-bottom: 1.25rem;">
+        Export internal marks, external marks, total scores, letter grades, and pass/fail statuses for department subjects.
+      </p>
+      <a href="{{ url_for('faculty.export_csv', report_type='grades') }}" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center;">
+        📥 Download Grade Sheet CSV
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

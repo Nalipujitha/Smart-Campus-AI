@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}{{ problem.title }} - Coding Lab IDE{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coding_lab.css') }}">
+<!-- Monaco Editor Loader from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+
+<div class="ide-wrapper">
+  
+  <!-- 1. Top IDE Bar -->
+  <div class="ide-topbar">
+    <!-- Left: Navigation & Problem Title -->
+    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+      <a href="{{ url_for('coding_lab.practice_catalog') }}" class="btn btn-secondary btn-sm" style="background: #1f2937; border-color: #374151; font-size: 0.78rem; padding: 0.3rem 0.6rem;">
+        &larr; Catalog
+      </a>
+      
+      <!-- Problem Dropdown Switcher -->
+      <select onchange="window.location.href='/student/coding-lab/practice/' + this.value" style="background: #161b22; color: #f0f6fc; border: 1px solid #30363d; border-radius: 4px; padding: 0.3rem 0.5rem; font-size: 0.85rem; font-weight: 600; max-width: 260px;">
+        {% for p in all_problems %}
+        <option value="{{ p.slug }}" {% if p.id == problem.id %}selected{% endif %}>
+          #{{ p.id }} {{ p.title }} ({{ p.difficulty }})
+        </option>
+        {% endfor %}
+      </select>
+
+      <span class="diff-badge diff-{{ problem.difficulty|lower }}">{{ problem.difficulty }}</span>
+      <span style="font-size: 0.8rem; color: #94a3b8;">{{ problem.points }} pts</span>
+
+      <!-- Prev / Next Navigation -->
+      <div style="display: flex; gap: 0.25rem;">
+        {% if prev_problem %}
+        <a href="{{ url_for('coding_lab.editor_view', identifier=prev_problem.slug) }}" class="btn btn-secondary btn-sm" title="Previous Problem: {{ prev_problem.title }}" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">&lt;</a>
+        {% endif %}
+        {% if next_problem %}
+        <a href="{{ url_for('coding_lab.editor_view', identifier=next_problem.slug) }}" class="btn btn-secondary btn-sm" title="Next Problem: {{ next_problem.title }}" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">&gt;</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Center: Language & Editor Preferences -->
+    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+      <!-- Language Selector -->
+      <select id="languageSelector" style="background: #161b22; color: #f0f6fc; border: 1px solid #30363d; border-radius: 4px; padding: 0.3rem 0.6rem; font-size: 0.82rem;">
+        {% for lang in languages %}
+          <option value="{{ lang.id }}" {% if not lang.available %}disabled{% endif %} {% if lang.id == 'python' %}selected{% endif %}>
+            {{ lang.name }} {% if not lang.available %}(Pending Server Config){% endif %}
+          </option>
+        {% endfor %}
+      </select>
+
+      <!-- Theme Selector -->
+      <select id="themeSelector" style="background: #161b22; color: #f0f6fc; border: 1px solid #30363d; border-radius: 4px; padding: 0.3rem 0.5rem; font-size: 0.82rem;">
+        <option value="vs-dark">Theme: Dark</option>
+        <option value="vs">Theme: Light</option>
+      </select>
+
+      <!-- Font Controls -->
+      <div style="display: flex; align-items: center; gap: 0.2rem; background: #161b22; border: 1px solid #30363d; border-radius: 4px; padding: 0.1rem 0.3rem;">
+        <button type="button" id="btnFontDecrease" class="btn-ide-reset" title="Decrease Font Size" style="padding: 0.15rem 0.4rem;">A-</button>
+        <button type="button" id="btnFontIncrease" class="btn-ide-reset" title="Increase Font Size" style="padding: 0.15rem 0.4rem;">A+</button>
+      </div>
+
+      <span id="editorStatusIndicator" style="font-size: 0.78rem; color: #8b949e; min-width: 90px;">
+        &bull; Ready
+      </span>
+    </div>
+
+    <!-- Right: Execution Buttons -->
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <button type="button" id="btnSaveDraft" class="btn-ide-reset" title="Save Draft (Ctrl+S)">
+        💾 Save Draft
+      </button>
+
+      <button type="button" id="btnResetCode" class="btn-ide-reset" title="Reset starter code">
+        🔄 Reset
+      </button>
+
+      <!-- Run Code -->
+      <button type="button" id="btnRunCode" class="btn-ide-run" title="Run Code (Ctrl+Enter)">
+        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></svg>
+        Run Code
+      </button>
+
+      <!-- Submit Code -->
+      <button type="button" id="btnSubmitCode" class="btn-ide-submit" title="Submit Solution (Ctrl+Shift+Enter)">
+        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/></svg>
+        Submit Solution
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. Split Workspace Layout -->
+  <div class="ide-split-layout">
+    
+    <!-- LEFT PANEL: Problem Description, Constraints, Test Cases, Submissions -->
+    <div class="ide-left-panel">
+      <!-- Tabs -->
+      <div class="ide-tab-header">
+        <button type="button" class="ide-tab-btn active" data-tab="description" onclick="switchLeftTab('description')">
+          📄 Description
+        </button>
+        <button type="button" class="ide-tab-btn" data-tab="history" onclick="switchLeftTab('history')">
+          📜 Submissions ({{ user_submissions|length }})
+        </button>
+      </div>
+
+      <!-- Problem Description Pane -->
+      <div id="left-pane-description" class="ide-panel-content left-panel-pane">
+        <h3 style="font-size: 1.25rem; font-weight: 700; color: #f0f6fc;">
+          {{ problem.title }}
+        </h3>
+        
+        <div style="margin-bottom: 1.25rem; color: #c9d1d9; font-size: 0.92rem;">
+          {{ problem.description_markdown }}
+        </div>
+
+        {% if problem.input_format %}
+        <div style="margin-bottom: 1rem;">
+          <h4 style="font-size: 0.85rem; text-transform: uppercase; color: #8b949e; letter-spacing: 0.04em;">Input Format</h4>
+          <div style="color: #cbd5e1; font-size: 0.88rem;">{{ problem.input_format }}</div>
+        </div>
+        {% endif %}
+
+        {% if problem.output_format %}
+        <div style="margin-bottom: 1rem;">
+          <h4 style="font-size: 0.85rem; text-transform: uppercase; color: #8b949e; letter-spacing: 0.04em;">Output Format</h4>
+          <div style="color: #cbd5e1; font-size: 0.88rem;">{{ problem.output_format }}</div>
+        </div>
+        {% endif %}
+
+        {% if problem.constraints %}
+        <div style="margin-bottom: 1rem;">
+          <h4 style="font-size: 0.85rem; text-transform: uppercase; color: #8b949e; letter-spacing: 0.04em;">Constraints</h4>
+          <div class="ide-sample-box" style="color: #eab308; background: #161b22;">{{ problem.constraints }}</div>
+        </div>
+        {% endif %}
+
+        {% if problem.sample_input %}
+        <div style="margin-bottom: 1rem;">
+          <h4 style="font-size: 0.85rem; text-transform: uppercase; color: #8b949e; letter-spacing: 0.04em;">Sample Input</h4>
+          <div class="ide-sample-box">{{ problem.sample_input }}</div>
+        </div>
+        {% endif %}
+
+        {% if problem.sample_output %}
+        <div style="margin-bottom: 1rem;">
+          <h4 style="font-size: 0.85rem; text-transform: uppercase; color: #8b949e; letter-spacing: 0.04em;">Sample Output</h4>
+          <div class="ide-sample-box">{{ problem.sample_output }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Public Test Cases Preview -->
+        {% if public_test_cases %}
+        <div style="margin-top: 1.25rem;">
+          <h4 style="font-size: 0.85rem; text-transform: uppercase; color: #8b949e; letter-spacing: 0.04em;">Public Test Cases</h4>
+          {% for tc in public_test_cases %}
+          <div style="background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 0.6rem 0.8rem; margin-bottom: 0.5rem; font-size: 0.82rem;">
+            <div><strong style="color: #8b949e;">Input:</strong> <code>{{ tc.input|replace('\n', ' ') }}</code></div>
+            <div style="margin-top: 0.25rem;"><strong style="color: #8b949e;">Expected:</strong> <code>{{ tc.expected_output }}</code></div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Problem Submissions History Pane -->
+      <div id="left-pane-history" class="ide-panel-content left-panel-pane" style="display: none;">
+        <h4 style="font-size: 0.95rem; font-weight: 600; color: #f0f6fc; margin-bottom: 0.75rem;">
+          Your Past Submissions for this Problem
+        </h4>
+
+        {% if user_submissions %}
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+          {% for sub in user_submissions %}
+          <div style="background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 0.75rem; font-size: 0.82rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+              <span class="badge" style="background: {{ '#238636' if sub.status == 'Accepted' else '#da3633' }}; color: #fff; font-size: 0.72rem;">
+                {{ sub.status }}
+              </span>
+              <span style="color: #8b949e;">{{ sub.submitted_at.strftime('%b %d, %H:%M') if sub.submitted_at else '' }}</span>
+            </div>
+            <div style="color: #94a3b8;">
+              Score: <strong>{{ sub.score }} pts</strong> &bull; {{ sub.passed_test_cases }}/{{ sub.total_test_cases }} cases &bull; {{ sub.execution_time_ms }} ms
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 2rem; color: #8b949e;">
+          No submissions yet for this problem. Write your solution and click "Submit Solution".
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- MAIN PANEL: Code Editor + Bottom Console -->
+    <div class="ide-main-panel">
+      
+      <!-- Monaco Editor Container -->
+      <div 
+        id="monacoContainer" 
+        class="monaco-host-container"
+        data-problem-id="{{ problem.id }}"
+        data-problem-slug="{{ problem.slug }}"
+        data-starter-code="{{ problem.get_starter_code('python')|e }}"
+        data-initial-code="{{ initial_code|e }}"
+      >
+        <!-- Textarea Fallback for Offline / CDN Fallback -->
+        <textarea 
+          id="codeFallbackTextarea" 
+          style="display: none; width: 100%; height: 100%; background: #1e1e1e; color: #d4d4d4; font-family: monospace; font-size: 14px; border: none; padding: 12px; outline: none; resize: none;"
+        >{{ initial_code }}</textarea>
+      </div>
+
+      <!-- BOTTOM PANEL: Output, Custom Input, Test Results -->
+      <div id="bottomConsolePanel" class="ide-bottom-panel">
+        
+        <!-- Console Tabs Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #161b22; border-bottom: 1px solid #30363d; padding: 0 0.5rem;">
+          <div style="display: flex;">
+            <button type="button" class="ide-tab-btn console-tab-btn active" data-tab="output" onclick="switchConsoleTab('output')">
+              🖥️ Output
+            </button>
+            <button type="button" class="ide-tab-btn console-tab-btn" data-tab="custom-input" onclick="switchConsoleTab('custom-input')">
+              ⌨️ Custom Input
+            </button>
+            <button type="button" class="ide-tab-btn console-tab-btn" data-tab="results" onclick="switchConsoleTab('results')">
+              🎯 Test Results
+            </button>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div id="executionMetadata" style="font-size: 0.78rem; color: #8b949e;"></div>
+            <button type="button" id="btnToggleConsoleCollapse" class="btn-ide-reset" title="Toggle Console Height" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">
+              ↕ Console
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 1: Output Pane -->
+        <div id="pane-output" class="console-pane" style="display: block; height: calc(100% - 36px); overflow-y: auto;">
+          <pre id="consoleOutput" class="console-output-box">Click "Run Code" to execute with custom input, or "Submit Solution" to test against hidden cases.</pre>
+          <pre id="consoleError" style="display: none; margin: 0; padding: 0.75rem 1rem; background: #1c1417; color: #f85149; font-family: monospace; font-size: 0.82rem; border-top: 1px solid #da3633; white-space: pre-wrap;"></pre>
+        </div>
+
+        <!-- Tab 2: Custom Input Pane -->
+        <div id="pane-custom-input" class="console-pane" style="display: none; height: calc(100% - 36px); padding: 0.75rem;">
+          <div style="font-size: 0.78rem; color: #8b949e; margin-bottom: 0.35rem;">
+            Provide Standard Input (stdin) for testing your code with custom inputs:
+          </div>
+          <textarea 
+            id="customInputArea" 
+            placeholder="e.g. 5 7" 
+            style="width: 100%; height: 80%; background: #090d16; color: #58a6ff; border: 1px solid #30363d; border-radius: 4px; padding: 0.5rem; font-family: monospace; font-size: 0.85rem; outline: none;"
+          >{{ problem.sample_input }}</textarea>
+        </div>
+
+        <!-- Tab 3: Test Results Pane -->
+        <div id="pane-results" class="console-pane" style="display: none; height: calc(100% - 36px); overflow-y: auto;">
+          <div id="testResultsContainer" style="padding: 1rem; color: #8b949e;">
+            Submit your solution to view server evaluation against test suite.
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Load Editor Engine Script -->
+<script src="{{ url_for('static', filename='js/coding_editor.js') }}"></script>
+{% endblock %}

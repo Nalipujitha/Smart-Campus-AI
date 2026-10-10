@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}Coding Lab - Student Dashboard{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coding_lab.css') }}">
+
+<div class="student-dashboard-wrapper">
+  
+  <!-- 1. Header & Tab Navigation -->
+  <div class="coding-lab-header">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+        <span class="badge" style="background: #2563eb; color: #fff; font-size: 0.72rem;">CODING LAB</span>
+        <span style="font-size: 0.8rem; color: #94a3b8;">Interactive Programming & Placement Drill</span>
+      </div>
+      <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin: 0;">
+        Welcome to Coding Lab, {{ student.first_name if student else 'Student' }}! 💻
+      </h2>
+      <p style="color: #94a3b8; font-size: 0.88rem; margin: 0.25rem 0 0 0;">
+        Sharpen your algorithms, test logic with real-time test cases, and boost your campus placement readiness.
+      </p>
+    </div>
+
+    <!-- Navigation Pills -->
+    <div class="coding-nav-pills">
+      <a href="{{ url_for('coding_lab.dashboard') }}" class="active">
+        📊 Overview
+      </a>
+      <a href="{{ url_for('coding_lab.practice_catalog') }}">
+        🧩 Practice Problems
+      </a>
+      <a href="{{ url_for('coding_lab.submissions_list') }}">
+        📜 Submissions
+      </a>
+      <a href="{{ url_for('coding_lab.progress_view') }}">
+        📈 Topic Mastery
+      </a>
+    </div>
+  </div>
+
+  <!-- 2. Primary Metrics Row -->
+  <div class="metrics-grid" style="margin-bottom: 1.5rem;">
+    <!-- Solved Card -->
+    <div class="coding-stat-card">
+      <div class="coding-stat-icon green">🏆</div>
+      <div>
+        <div style="font-size: 0.8rem; color: #8b949e; text-transform: uppercase; font-weight: 600;">Problems Solved</div>
+        <div style="font-size: 1.6rem; font-weight: 700; color: #f0f6fc;">
+          {{ problems_solved }} <span style="font-size: 0.9rem; color: #8b949e; font-weight: 400;">/ {{ total_problems }}</span>
+        </div>
+        <div style="font-size: 0.75rem; color: #22c55e;">
+          {{ ((problems_solved / (total_problems or 1)) * 100)|round(1) }}% library completed
+        </div>
+      </div>
+    </div>
+
+    <!-- Attempted Card -->
+    <div class="coding-stat-card">
+      <div class="coding-stat-icon blue">🎯</div>
+      <div>
+        <div style="font-size: 0.8rem; color: #8b949e; text-transform: uppercase; font-weight: 600;">Problems Attempted</div>
+        <div style="font-size: 1.6rem; font-weight: 700; color: #f0f6fc;">{{ problems_attempted }}</div>
+        <div style="font-size: 0.75rem; color: #38bdf8;">{{ total_submissions }} total submissions</div>
+      </div>
+    </div>
+
+    <!-- Success Rate Card -->
+    <div class="coding-stat-card">
+      <div class="coding-stat-icon purple">⚡</div>
+      <div>
+        <div style="font-size: 0.8rem; color: #8b949e; text-transform: uppercase; font-weight: 600;">Success Rate</div>
+        <div style="font-size: 1.6rem; font-weight: 700; color: #f0f6fc;">{{ success_rate }}%</div>
+        <div style="font-size: 0.75rem; color: #c084fc;">Accepted vs total runs</div>
+      </div>
+    </div>
+
+    <!-- Streak Card -->
+    <div class="coding-stat-card">
+      <div class="coding-stat-icon orange">🔥</div>
+      <div>
+        <div style="font-size: 0.8rem; color: #8b949e; text-transform: uppercase; font-weight: 600;">Practice Streak</div>
+        <div style="font-size: 1.6rem; font-weight: 700; color: #f0f6fc;">
+          {{ current_streak }} <span style="font-size: 0.9rem; color: #8b949e; font-weight: 400;">Days</span>
+        </div>
+        <div style="font-size: 0.75rem; color: #fb923c;">Keep momentum daily!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Two-Column Content Grid: Recommended & Difficulty / Placement -->
+  <div style="display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; margin-bottom: 1.5rem;">
+    
+    <!-- Left: Recommended Practice Problems -->
+    <div class="card" style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1.25rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="font-size: 1.1rem; font-weight: 600; color: #f0f6fc; margin: 0;">
+          💡 Recommended Next Challenges
+        </h3>
+        <a href="{{ url_for('coding_lab.practice_catalog') }}" class="btn btn-secondary btn-sm" style="font-size: 0.8rem;">
+          View All Problems &rarr;
+        </a>
+      </div>
+
+      {% if recommended_problems %}
+      <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        {% for prob in recommended_problems %}
+        <div style="background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 0.9rem 1.25rem; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.2s;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+              <span class="diff-badge diff-{{ prob.difficulty|lower }}">{{ prob.difficulty }}</span>
+              <span style="font-size: 0.78rem; color: #8b949e;">{{ prob.topic }}</span>
+            </div>
+            <a href="{{ url_for('coding_lab.editor_view', identifier=prob.slug) }}" style="font-weight: 600; color: #58a6ff; text-decoration: none; font-size: 0.95rem;">
+              {{ prob.title }}
+            </a>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="font-size: 0.8rem; color: #8b949e;">{{ prob.points }} pts</span>
+            <a href="{{ url_for('coding_lab.editor_view', identifier=prob.slug) }}" class="btn btn-primary btn-sm" style="background: #2563eb; border: none; font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+              Solve &rarr;
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="text-align: center; padding: 2rem; color: #8b949e;">
+        🎉 All recommended problems solved! Keep exploring the problem catalog.
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Right: Difficulty Breakdown & Placement Readiness Alignment -->
+    <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+      
+      <!-- Difficulty Progress -->
+      <div class="card" style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1.25rem;">
+        <h4 style="font-size: 0.95rem; font-weight: 600; color: #f0f6fc; margin: 0 0 1rem 0;">
+          Difficulty Mastery
+        </h4>
+        
+        <!-- Easy -->
+        <div style="margin-bottom: 0.85rem;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 0.3rem;">
+            <span style="color: #22c55e; font-weight: 600;">Easy</span>
+            <span style="color: #8b949e;">{{ difficulty_stats['Easy']['solved'] }} / {{ difficulty_stats['Easy']['total'] }}</span>
+          </div>
+          <div style="background: #0d1117; height: 6px; border-radius: 3px; overflow: hidden;">
+            <div style="background: #22c55e; height: 100%; width: {{ (difficulty_stats['Easy']['solved'] / (difficulty_stats['Easy']['total'] or 1) * 100)|round(0) }}%;"></div>
+          </div>
+        </div>
+
+        <!-- Medium -->
+        <div style="margin-bottom: 0.85rem;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 0.3rem;">
+            <span style="color: #eab308; font-weight: 600;">Medium</span>
+            <span style="color: #8b949e;">{{ difficulty_stats['Medium']['solved'] }} / {{ difficulty_stats['Medium']['total'] }}</span>
+          </div>
+          <div style="background: #0d1117; height: 6px; border-radius: 3px; overflow: hidden;">
+            <div style="background: #eab308; height: 100%; width: {{ (difficulty_stats['Medium']['solved'] / (difficulty_stats['Medium']['total'] or 1) * 100)|round(0) }}%;"></div>
+          </div>
+        </div>
+
+        <!-- Hard -->
+        <div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 0.3rem;">
+            <span style="color: #ef4444; font-weight: 600;">Hard</span>
+            <span style="color: #8b949e;">{{ difficulty_stats['Hard']['solved'] }} / {{ difficulty_stats['Hard']['total'] }}</span>
+          </div>
+          <div style="background: #0d1117; height: 6px; border-radius: 3px; overflow: hidden;">
+            <div style="background: #ef4444; height: 100%; width: {{ (difficulty_stats['Hard']['solved'] / (difficulty_stats['Hard']['total'] or 1) * 100)|round(0) }}%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Placement Readiness Badge -->
+      <div class="card" style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 1px solid #4338ca; border-radius: 8px; padding: 1.25rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <span style="font-size: 1.2rem;">🎯</span>
+          <h4 style="font-size: 0.95rem; font-weight: 600; color: #e0e7ff; margin: 0;">Placement Coding Score</h4>
+        </div>
+        <div style="font-size: 1.8rem; font-weight: 700; color: #a5b4fc; margin-bottom: 0.25rem;">
+          {{ placement_profile.coding_score if placement_profile and placement_profile.coding_score is not none else '0.0' }}%
+        </div>
+        <p style="color: #94a3b8; font-size: 0.78rem; margin: 0;">
+          Your Coding Lab submissions directly enhance your technical readiness index for corporate placement drives.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 4. Recent Submissions Section -->
+  <div class="card" style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1.25rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h3 style="font-size: 1.1rem; font-weight: 600; color: #f0f6fc; margin: 0;">
+        📜 Recent Submissions
+      </h3>
+      <a href="{{ url_for('coding_lab.submissions_list') }}" class="btn btn-secondary btn-sm" style="font-size: 0.8rem;">
+        Full Submission Log &rarr;
+      </a>
+    </div>
+
+    {% if recent_submissions %}
+    <div class="table-responsive">
+      <table class="table" style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+        <thead>
+          <tr style="border-bottom: 1px solid #30363d; color: #8b949e; text-align: left;">
+            <th style="padding: 0.6rem 0.75rem;">Problem</th>
+            <th style="padding: 0.6rem 0.75rem;">Status</th>
+            <th style="padding: 0.6rem 0.75rem;">Score</th>
+            <th style="padding: 0.6rem 0.75rem;">Language</th>
+            <th style="padding: 0.6rem 0.75rem;">Time</th>
+            <th style="padding: 0.6rem 0.75rem;">Submitted</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sub in recent_submissions %}
+          <tr style="border-bottom: 1px solid #21262d; color: #c9d1d9;">
+            <td style="padding: 0.6rem 0.75rem; font-weight: 500;">
+              <a href="{{ url_for('coding_lab.editor_view', identifier=sub.problem.slug if sub.problem else sub.problem_id) }}" style="color: #58a6ff; text-decoration: none;">
+                {{ sub.problem.title if sub.problem else 'Problem #' ~ sub.problem_id }}
+              </a>
+            </td>
+            <td style="padding: 0.6rem 0.75rem;">
+              <span class="badge" style="background: {{ '#238636' if sub.status == 'Accepted' else '#da3633' }}; color: #fff; font-size: 0.75rem;">
+                {{ sub.status }}
+              </span>
+            </td>
+            <td style="padding: 0.6rem 0.75rem;">{{ sub.score }} pts</td>
+            <td style="padding: 0.6rem 0.75rem; text-transform: capitalize;">{{ sub.language }}</td>
+            <td style="padding: 0.6rem 0.75rem;">{{ sub.execution_time_ms }} ms</td>
+            <td style="padding: 0.6rem 0.75rem; color: #8b949e;">{{ sub.submitted_at.strftime('%b %d, %H:%M') if sub.submitted_at else 'Recent' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 2.5rem; color: #8b949e;">
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📝</div>
+      <p style="margin: 0 0 1rem 0;">You haven't submitted any solutions yet.</p>
+      <a href="{{ url_for('coding_lab.practice_catalog') }}" class="btn btn-primary btn-sm" style="background: #2563eb; border: none;">
+        Start Practicing Now
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

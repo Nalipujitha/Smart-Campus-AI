@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Management - Smart Campus Analytics{% endblock %}
+{% block header_title %}Attendance Recording & Session Hub{% endblock %}
+
+{% block header_actions %}
+  <a href="{{ url_for('attendance.reports') }}" class="btn btn-secondary btn-sm">📊 View Reports & Alerts</a>
+  <a href="{{ url_for('attendance.export_csv') }}" class="btn btn-secondary btn-sm">📥 Export CSV</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- Create New Attendance Session Card -->
+{% if current_user.role in ['Admin', 'Faculty'] %}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">📝 Record New Class Attendance Session</span>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="{{ url_for('attendance.record_session') }}" id="attendanceSessionForm">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label for="sessionDeptSelect">Department</label>
+          <select name="department" id="sessionDeptSelect" class="form-select" required>
+            <option value="">Select Department</option>
+            {% for dept in departments %}
+              <option value="{{ dept }}">{{ dept }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="sessionSemSelect">Semester</label>
+          <select name="semester" id="sessionSemSelect" class="form-select" required>
+            <option value="">Select Semester</option>
+            {% for s in range(1, 9) %}
+              <option value="{{ s }}">Semester {{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="sessionSubjectInput">Subject Name</label>
+          <input type="text" name="subject" id="sessionSubjectInput" class="form-control" placeholder="e.g. Data Structures" required>
+        </div>
+
+        <div class="form-group">
+          <label for="sessionDateInput">Date</label>
+          <input type="date" name="session_date" id="sessionDateInput" class="form-control" value="{{ today }}" required>
+        </div>
+
+        <div class="form-group">
+          <label for="sessionTimeSlotInput">Time Slot</label>
+          <input type="text" name="time_slot" id="sessionTimeSlotInput" class="form-control" value="09:00 - 10:00 AM">
+        </div>
+
+        <div style="display: flex; align-items: flex-end;">
+          <button type="button" id="fetchRosterBtn" class="btn btn-primary" style="width: 100%;">
+            Load Class Roster
+          </button>
+        </div>
+      </div>
+
+      <!-- Dynamic Roster Table Container -->
+      <div id="rosterContainer" style="display: none; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h4 style="font-size: 1rem; font-weight: 700; color: var(--primary-navy);">Student Class Roster</h4>
+          <div style="display: flex; gap: 0.5rem;">
+            <button type="button" id="markAllPresentBtn" class="btn btn-secondary btn-sm">Mark All Present</button>
+            <button type="button" id="markAllAbsentBtn" class="btn btn-secondary btn-sm">Mark All Absent</button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Student ID</th>
+                <th>Student Name</th>
+                <th>Attendance Status</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="rosterTableBody">
+              <!-- Loaded via AJAX JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
+          <button type="submit" class="btn btn-success" style="padding: 0.65rem 1.5rem; font-weight: 600;">
+            Submit & Save Attendance Session
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- Recent Attendance Sessions Card -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">🕒 Recent Attendance Sessions</span>
+  </div>
+  <div class="card-body" style="padding: 0;">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Session Date</th>
+            <th>Department</th>
+            <th>Sem</th>
+            <th>Subject</th>
+            <th>Faculty</th>
+            <th>Present</th>
+            <th>Absent</th>
+            <th>Leave</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in sessions %}
+            <tr>
+              <td><strong>{{ s.session_date.strftime('%Y-%m-%d') }}</strong></td>
+              <td>{{ s.department }}</td>
+              <td>Sem {{ s.semester }}</td>
+              <td>{{ s.subject }}</td>
+              <td>{{ s.faculty.full_name if s.faculty else 'Unassigned' }}</td>
+              <td><span class="badge badge-success">{{ s.records.filter_by(status='Present').count() }}</span></td>
+              <td><span class="badge badge-danger">{{ s.records.filter_by(status='Absent').count() }}</span></td>
+              <td><span class="badge badge-warning">{{ s.records.filter_by(status='On Leave').count() }}</span></td>
+              <td>{{ s.records.count() }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/attendance.js') }}"></script>
+{% endblock %}

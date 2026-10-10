@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Directory & Enrollment - Admin Portal{% endblock %}
+{% block header_title %}Student Directory & Management{% endblock %}
+
+{% block header_actions %}
+  <button onclick="document.getElementById('enrollModal').style.display='block'" class="btn btn-primary btn-sm">
+    + Enroll New Student
+  </button>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Search & Filter Card -->
+  <div class="card" style="padding: 1.25rem;">
+    <form method="GET" action="{{ url_for('admin.students') }}" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+      <div style="flex: 2; min-width: 200px;">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 0.3rem;">Search Student</label>
+        <input type="text" name="q" value="{{ search_query }}" placeholder="Search by name, ID, or email..." class="form-control" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+      </div>
+      <div style="flex: 1; min-width: 180px;">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 0.3rem;">Department</label>
+        <select name="department" class="form-control" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+          <option value="">All Departments</option>
+          {% for d in departments %}
+            <option value="{{ d }}" {% if selected_dept == d %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="flex: 1; min-width: 140px;">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 0.3rem;">Status</label>
+        <select name="status" class="form-control" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+          <option value="">All Statuses</option>
+          <option value="Active" {% if selected_status == 'Active' %}selected{% endif %}>Active</option>
+          <option value="At Risk" {% if selected_status == 'At Risk' %}selected{% endif %}>At Risk</option>
+          <option value="Deactivated" {% if selected_status == 'Deactivated' %}selected{% endif %}>Deactivated</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="{{ url_for('admin.students') }}" class="btn btn-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Student Roster Table -->
+  <div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <span class="card-title">Enrolled Students Roster</span>
+      <span style="font-size: 0.85rem; color: #64748b;">Page {{ pagination.page }} of {{ pagination.pages or 1 }}</span>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student ID</th>
+            <th>Full Name</th>
+            <th>Department</th>
+            <th>Semester</th>
+            <th>Section</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in students %}
+          <tr>
+            <td style="font-family: monospace; font-weight: 700; color: #0284c7;">{{ s.student_id }}</td>
+            <td>
+              <div style="font-weight: 600;">{{ s.full_name }}</div>
+              <div style="font-size: 0.75rem; color: #64748b;">{{ s.email }}</div>
+            </td>
+            <td>{{ s.department }}</td>
+            <td>Sem {{ s.semester }} (Yr {{ s.academic_year }})</td>
+            <td>{{ s.section }}</td>
+            <td>
+              {% if s.status == 'Active' %}
+                <span class="badge badge-success">Active</span>
+              {% elif s.status == 'At Risk' %}
+                <span class="badge badge-warning">At Risk</span>
+              {% else %}
+                <span class="badge badge-danger">{{ s.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <a href="{{ url_for('students.view_student', student_id=s.student_id) }}" class="btn btn-secondary btn-sm" title="View Full Profile">Profile</a>
+                <form method="POST" action="{{ url_for('admin.toggle_student_status', student_id=s.student_id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to change status for {{ s.full_name }}?');">
+                  <button type="submit" class="btn btn-sm {% if s.status == 'Deactivated' %}btn-primary{% else %}btn-danger{% endif %}">
+                    {{ 'Activate' if s.status == 'Deactivated' else 'Deactivate' }}
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" style="text-align: center; color: #94a3b8; padding: 2rem;">No student records found matching the criteria.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    {% if pagination.pages > 1 %}
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border-top: 1px solid #f1f5f9;">
+      <div>
+        Showing {{ (pagination.page - 1) * 20 + 1 }} to {{ [pagination.page * 20, pagination.total]|min }} of {{ pagination.total }} records
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        {% if pagination.has_prev %}
+          <a href="{{ url_for('admin.students', page=pagination.prev_num, q=search_query, department=selected_dept, status=selected_status) }}" class="btn btn-secondary btn-sm">← Previous</a>
+        {% endif %}
+        {% if pagination.has_next %}
+          <a href="{{ url_for('admin.students', page=pagination.next_num, q=search_query, department=selected_dept, status=selected_status) }}" class="btn btn-secondary btn-sm">Next →</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Enroll Student Modal Dialog -->
+<div id="enrollModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 999; overflow-y: auto;">
+  <div style="background: white; border-radius: 12px; max-width: 550px; margin: 4rem auto; padding: 1.75rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">Enroll New Student</h3>
+      <button onclick="document.getElementById('enrollModal').style.display='none'" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #64748b;">✕</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.students') }}" style="display: flex; flex-direction: column; gap: 1rem;">
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Student ID *</label>
+        <input type="text" name="student_id" placeholder="e.g. STU2024150" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">First Name *</label>
+          <input type="text" name="first_name" placeholder="First Name" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Last Name *</label>
+          <input type="text" name="last_name" placeholder="Last Name" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Email Address *</label>
+        <input type="email" name="email" placeholder="student@campus.edu" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+      </div>
+
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Department *</label>
+        <select name="department" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+          {% for d in departments %}
+            <option value="{{ d }}">{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Academic Year</label>
+          <select name="academic_year" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+            <option value="1">Year 1</option>
+            <option value="2">Year 2</option>
+            <option value="3">Year 3</option>
+            <option value="4">Year 4</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Semester</label>
+          <input type="number" name="semester" min="1" max="8" value="1" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Section</label>
+          <input type="text" name="section" value="A" maxlength="4" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+        <button type="button" onclick="document.getElementById('enrollModal').style.display='none'" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary">Enroll Student</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}Faculty Interventions - Smart Campus Analytics{% endblock %}
+{% block header_title %}Faculty Mentoring & Student Support Interventions{% endblock %}
+
+{% block header_actions %}
+  {% if current_user.role in ['Admin', 'Faculty'] %}
+    <button class="btn btn-primary" onclick="document.getElementById('newInterventionModal').style.display='block'">
+      + Log Mentoring Session
+    </button>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<!-- Intervention Metrics -->
+<div class="metrics-grid">
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-blue">📁</div>
+    <div class="stat-content">
+      <div class="stat-label">Total Cases</div>
+      <div class="stat-value">{{ total_count }}</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-amber">⏳</div>
+    <div class="stat-content">
+      <div class="stat-label">Open / In Progress</div>
+      <div class="stat-value">{{ open_count + in_progress_count }}</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-green">✅</div>
+    <div class="stat-content">
+      <div class="stat-label">Completed</div>
+      <div class="stat-value">{{ completed_count }}</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-red">⏰</div>
+    <div class="stat-content">
+      <div class="stat-label">Overdue Follow-ups</div>
+      <div class="stat-value">{{ overdue_count }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Interventions Table Card -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">📝 Mentoring Intervention Records</span>
+  </div>
+  <div class="card-body" style="padding: 0;">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Title & Category</th>
+            <th>Advisor</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Session Date</th>
+            <th>Follow-up Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if interventions %}
+            {% for inv in interventions %}
+              <tr>
+                <td>
+                  <strong>{{ inv.student.full_name if inv.student else inv.student_id }}</strong>
+                  <div style="font-size: 0.75rem; color: #64748b;">{{ inv.student_id }}</div>
+                </td>
+                <td>
+                  <div style="font-weight: 600; color: var(--primary-navy);">{{ inv.title }}</div>
+                  <span class="badge badge-neutral">{{ inv.category }}</span>
+                </td>
+                <td>{{ inv.faculty.full_name if inv.faculty else 'Unassigned' }}</td>
+                <td>
+                  <span class="badge {% if inv.priority == 'High' %}badge-danger{% elif inv.priority == 'Medium' %}badge-warning{% else %}badge-info{% endif %}">
+                    {{ inv.priority }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge {% if inv.status == 'Completed' %}badge-success{% elif inv.status == 'In Progress' %}badge-info{% else %}badge-warning{% endif %}">
+                    {{ inv.status }}
+                  </span>
+                </td>
+                <td>{{ inv.session_date.strftime('%Y-%m-%d') }}</td>
+                <td>
+                  {% if inv.follow_up_date %}
+                    <span style="color: {% if inv.is_overdue %}#ef4444; font-weight: 700;{% else %}#475569;{% endif %}">
+                      {{ inv.follow_up_date.strftime('%Y-%m-%d') }}
+                      {% if inv.is_overdue %}⚠️ (Overdue){% endif %}
+                    </span>
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td>
+                  {% if current_user.role in ['Admin', 'Faculty'] %}
+                    <button class="btn btn-secondary btn-sm" onclick="openEditInterventionModal({{ inv.id }}, '{{ inv.title|escape }}', '{{ inv.status }}', '{{ inv.priority }}', '{{ inv.follow_up_date.strftime('%Y-%m-%d') if inv.follow_up_date else '' }}', '{{ (inv.outcome_notes or '')|escape }}', '{{ (inv.action_items or '')|escape }}')">
+                      Update Case
+                    </button>
+                  {% else %}
+                    <span style="font-size: 0.75rem; color: #64748b;">Active Case</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 2rem; color: #64748b;">
+                No intervention records logged yet.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- New Intervention Modal -->
+{% if current_user.role in ['Admin', 'Faculty'] %}
+<div id="newInterventionModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center;">
+  <div style="background: white; border-radius: 10px; max-width: 550px; width: 90%; margin: 5vh auto; padding: 1.75rem; max-height: 90vh; overflow-y: auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--primary-navy);">Log New Mentoring Session</h3>
+      <button onclick="document.getElementById('newInterventionModal').style.display='none'" style="background:none; border:none; font-size: 1.25rem; cursor:pointer;">✕</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('interventions.create_intervention') }}">
+      <div class="form-group" style="margin-bottom: 0.85rem;">
+        <label for="int_student_id">Select Student</label>
+        <select name="student_id" id="int_student_id" class="form-select" required>
+          <option value="">Select Student</option>
+          {% for s in students %}
+            <option value="{{ s.student_id }}">{{ s.student_id }} - {{ s.full_name }} ({{ s.department }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0.85rem;">
+        <label for="int_title">Intervention Title</label>
+        <input type="text" name="title" id="int_title" class="form-control" placeholder="e.g. Attendance Shortage Advisory & Study Plan" required>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
+        <div class="form-group">
+          <label for="int_category">Category</label>
+          <select name="category" id="int_category" class="form-select">
+            <option value="Academic">Academic</option>
+            <option value="Attendance">Attendance</option>
+            <option value="Placement">Placement</option>
+            <option value="Personal">Personal & Wellness</option>
+            <option value="Skills">Skills Lab</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="int_priority">Priority</label>
+          <select name="priority" id="int_priority" class="form-select">
+            <option value="High">High</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
+        <div class="form-group">
+          <label for="int_session_date">Session Date</label>
+          <input type="date" name="session_date" id="int_session_date" class="form-control" value="{{ today }}">
+        </div>
+        <div class="form-group">
+          <label for="int_follow_up_date">Follow-up Date</label>
+          <input type="date" name="follow_up_date" id="int_follow_up_date" class="form-control">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0.85rem;">
+        <label for="int_notes">Session Notes (Confidential)</label>
+        <textarea name="notes" id="int_notes" class="form-control" placeholder="Detailed mentoring notes and observations..." required></textarea>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="int_action_items">Action Items Assigned</label>
+        <textarea name="action_items" id="int_action_items" class="form-control" placeholder="1. Attend remedial coaching..."></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('newInterventionModal').style.display='none'">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Mentoring Case</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Update Intervention Modal -->
+<div id="interventionModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center;">
+  <div style="background: white; border-radius: 10px; max-width: 500px; width: 90%; margin: 5vh auto; padding: 1.75rem; max-height: 90vh; overflow-y: auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--primary-navy);" id="editInterventionTitle">Update Intervention Case</h3>
+      <button onclick="closeInterventionModal()" style="background:none; border:none; font-size: 1.25rem; cursor:pointer;">✕</button>
+    </div>
+
+    <form method="POST" id="updateInterventionForm">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
+        <div class="form-group">
+          <label for="editStatusSelect">Status</label>
+          <select name="status" id="editStatusSelect" class="form-select">
+            <option value="Open">Open</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="editPrioritySelect">Priority</label>
+          <select name="priority" id="editPrioritySelect" class="form-select">
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0.85rem;">
+        <label for="editFollowUpDate">Follow-up Date</label>
+        <input type="date" name="follow_up_date" id="editFollowUpDate" class="form-control">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0.85rem;">
+        <label for="editActionItems">Action Items</label>
+        <textarea name="action_items" id="editActionItems" class="form-control"></textarea>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="editOutcomeNotes">Outcome Notes & Progress</label>
+        <textarea name="outcome_notes" id="editOutcomeNotes" class="form-control" placeholder="Record student progress and outcomes..."></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeInterventionModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Update Record</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/interventions.js') }}"></script>
+{% endblock %}

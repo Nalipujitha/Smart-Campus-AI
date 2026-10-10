@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Placement Officer Profile - Placement Portal{% endblock %}
+{% block header_title %}Placement Officer Profile{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 800px;">
+
+  <div class="card">
+    <div style="display: flex; gap: 1.5rem; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
+      <div style="width: 72px; height: 72px; border-radius: 50%; background: #7c3aed; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; font-weight: 700;">
+        {{ user.full_name[:2].upper() }}
+      </div>
+      <div>
+        <h2 style="font-size: 1.35rem; font-weight: 700; color: #0f172a; margin: 0 0 0.25rem 0;">{{ user.full_name }}</h2>
+        <div style="font-size: 0.85rem; color: #64748b;">{{ user.email }} | Username: <strong style="color: #7c3aed;">{{ user.username }}</strong></div>
+        <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+          <span class="badge badge-warning">Training & Placement Officer</span>
+          <span class="badge badge-info">Campus Recruitment Cell</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+      <div>
+        <span style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700;">Office Role</span>
+        <div style="font-weight: 600; color: #0f172a; margin-top: 0.25rem;">Head of Training & Placements</div>
+      </div>
+
+      <div>
+        <span style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700;">Cell Location</span>
+        <div style="font-weight: 600; color: #0f172a; margin-top: 0.25rem;">Block A, Career Development Wing</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Settings & Scoring Weights - Smart Campus Analytics{% endblock %}
+{% block header_title %}Institutional Configuration & Scoring Policy{% endblock %}
+
+{% block content %}
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+  <!-- Success Scoring Weights Configuration -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">⚖️ Success Scoring Weights (Total must = 1.0 or 100%)</span>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('admin.update_weights') }}">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 1rem;">
+          <div class="form-group">
+            <label for="weight_academic">Academic Weight (30%)</label>
+            <input type="number" step="0.01" name="weight_academic" id="weight_academic" class="form-control" value="{{ weights.academic }}" required>
+          </div>
+          <div class="form-group">
+            <label for="weight_attendance">Attendance Weight (20%)</label>
+            <input type="number" step="0.01" name="weight_attendance" id="weight_attendance" class="form-control" value="{{ weights.attendance }}" required>
+          </div>
+          <div class="form-group">
+            <label for="weight_placement">Placement Readiness (15%)</label>
+            <input type="number" step="0.01" name="weight_placement" id="weight_placement" class="form-control" value="{{ weights.placement }}" required>
+          </div>
+          <div class="form-group">
+            <label for="weight_lms">LMS Digital Activity (10%)</label>
+            <input type="number" step="0.01" name="weight_lms" id="weight_lms" class="form-control" value="{{ weights.lms }}" required>
+          </div>
+          <div class="form-group">
+            <label for="weight_engagement">Co-Curricular Engagement (10%)</label>
+            <input type="number" step="0.01" name="weight_engagement" id="weight_engagement" class="form-control" value="{{ weights.engagement }}" required>
+          </div>
+          <div class="form-group">
+            <label for="weight_skills">Skills Assessment (10%)</label>
+            <input type="number" step="0.01" name="weight_skills" id="weight_skills" class="form-control" value="{{ weights.skills }}" required>
+          </div>
+          <div class="form-group">
+            <label for="weight_feedback">Faculty Support/Feedback (5%)</label>
+            <input type="number" step="0.01" name="weight_feedback" id="weight_feedback" class="form-control" value="{{ weights.feedback }}" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+          Save Weights & Recalculate Scores
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Attendance & Risk Thresholds -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">🚨 Policy Thresholds & Risk Boundaries</span>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('admin.update_thresholds') }}">
+        <div class="form-group" style="margin-bottom: 0.85rem;">
+          <label for="attendance_warning_threshold">Attendance Warning Threshold (%)</label>
+          <input type="number" step="1.0" name="attendance_warning_threshold" id="attendance_warning_threshold" class="form-control" value="{{ att_policy.warning_threshold }}" required>
+          <small style="color: #64748b;">Triggers attendance shortage advisory alert</small>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0.85rem;">
+          <label for="attendance_critical_threshold">Attendance Critical Threshold (%)</label>
+          <input type="number" step="1.0" name="attendance_critical_threshold" id="attendance_critical_threshold" class="form-control" value="{{ att_policy.critical_threshold }}" required>
+          <small style="color: #64748b;">Triggers mandatory advisor mentoring intervention</small>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0.85rem;">
+          <label for="risk_high_threshold">High Academic Risk Score Cutoff (&lt; X)</label>
+          <input type="number" step="1.0" name="risk_high_threshold" id="risk_high_threshold" class="form-control" value="{{ risk_thresh.high }}" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label for="risk_medium_threshold">Medium Academic Risk Score Cutoff (&lt; X)</label>
+          <input type="number" step="1.0" name="risk_medium_threshold" id="risk_medium_threshold" class="form-control" value="{{ risk_thresh.medium }}" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+          Update Policy Thresholds
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- System Audit Logs Table -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">📜 Institutional Audit Trail & Activity Logs</span>
+  </div>
+  <div class="card-body" style="padding: 0;">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Timestamp (UTC)</th>
+            <th>User</th>
+            <th>Module</th>
+            <th>Action</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in audit_logs %}
+            <tr>
+              <td style="font-size: 0.78rem; color: #64748b;">{{ a.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+              <td><strong>{{ a.username }}</strong></td>
+              <td><span class="badge badge-neutral">{{ a.module }}</span></td>
+              <td><code>{{ a.action }}</code></td>
+              <td style="font-size: 0.82rem; color: #334155;">{{ a.details }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

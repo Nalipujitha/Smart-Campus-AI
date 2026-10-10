@@ -1,0 +1,649 @@
+<!-- ==========================================================================
+     EduPulse AI - Modern Student Success Dashboard Template
+     ========================================================================== -->
+
+<div class="student-dashboard-wrapper">
+  
+  <!-- 1. Student Welcome Header -->
+  <div class="student-welcome-banner card" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #fff; border: none; padding: 1.75rem; margin-bottom: 1.5rem; position: relative; overflow: hidden;">
+    <div style="position: absolute; right: -20px; top: -20px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(0,0,0,0) 70%); border-radius: 50%;"></div>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; position: relative; z-index: 2;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem;">
+          <span class="badge" style="background: #2563eb; color: #fff; font-size: 0.72rem; letter-spacing: 0.05em;">STUDENT PORTAL</span>
+          <span style="font-size: 0.8rem; color: #94a3b8;">Academic Year {{ student.academic_year }} &bull; Semester {{ student.semester }} (Section {{ student.section or 'A' }})</span>
+        </div>
+        <h2 style="font-size: 1.65rem; font-weight: 700; color: #f8fafc; margin: 0 0 0.4rem 0;">
+          Welcome back, {{ student.first_name }}! 👋
+        </h2>
+        <p style="color: #cbd5e1; font-size: 0.9rem; margin: 0; max-width: 620px;">
+          Track your real-time attendance, academic scores, placement drills, and AI recommendations to stay ahead this semester.
+        </p>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+        <!-- Notifications Pill Trigger -->
+        <a href="#notifications-section" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2);">
+          🔔 Alerts 
+          <span class="badge" style="background: {{ '#ef4444' if student_data.notifications|length > 0 else '#10b981' }}; color: #fff; margin-left: 0.35rem;">
+            {{ student_data.notifications|length }}
+          </span>
+        </a>
+        <a href="{{ url_for('students.view_student', student_id=student.student_id) }}" class="btn btn-primary btn-sm" style="background: #2563eb; border: none;">
+          👤 View Full Profile
+        </a>
+        <a href="{{ url_for('coding_lab.dashboard') }}" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.1); color: #38bdf8; border-color: rgba(56,189,248,0.3);">
+          🧩 Open Coding Lab
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Six Primary Summary Cards -->
+  <div class="metrics-grid" style="margin-bottom: 1.5rem;">
+    <!-- 1. Attendance Card -->
+    <div class="stat-card" style="border-top: 3px solid {{ '#10b981' if student_data.att_data.attendance_percentage and student_data.att_data.attendance_percentage >= 75 else '#ef4444' }};">
+      <div class="stat-icon-wrapper {{ 'stat-icon-green' if student_data.att_data.attendance_percentage and student_data.att_data.attendance_percentage >= 75 else 'stat-icon-red' }}">
+        🕒
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Attendance Rate</div>
+        <div class="stat-value">
+          {{ student_data.att_data.attendance_percentage if student_data.att_data.attendance_percentage is not none else 'N/A' }}%
+        </div>
+        <div class="stat-subtext">
+          {{ student_data.att_data.present_count }}/{{ student_data.att_data.eligible_sessions }} eligible sessions
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Academic Performance Card -->
+    <div class="stat-card" style="border-top: 3px solid #2563eb;">
+      <div class="stat-icon-wrapper stat-icon-blue">🎓</div>
+      <div class="stat-content">
+        <div class="stat-label">Academic GPA</div>
+        <div class="stat-value">
+          {{ student_data.academic_record.gpa if student_data.academic_record else 'N/A' }} <span style="font-size: 0.8rem; font-weight: normal; color: #64748b;">/ 10</span>
+        </div>
+        <div class="stat-subtext">
+          Standing: <strong>{{ student_data.academic_record.academic_standing if student_data.academic_record else 'Good' }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Student Success Score Card -->
+    <div class="stat-card" style="border-top: 3px solid {{ student_data.score_data.status_color if (student_data.score_data and student_data.score_data.status_color) else '#0d9488' }};">
+      <div class="stat-icon-wrapper stat-icon-teal">🎯</div>
+      <div class="stat-content">
+        <div class="stat-label">Success Score</div>
+        <div class="stat-value" id="studentSuccessScoreValue">
+          {{ student_data.score_data.score if (student_data.score_data and student_data.score_data.score is not none) else 'N/A' }} <span style="font-size: 0.8rem; font-weight: normal; color: #64748b;">/ 100</span>
+        </div>
+        <div class="stat-subtext">
+          Status: <strong style="color: {{ student_data.score_data.status_color if (student_data.score_data and student_data.score_data.status_color) else '#0d9488' }};">{{ student_data.score_data.status_label if (student_data.score_data and student_data.score_data.status_label) else (student_data.score_data.category if student_data.score_data else 'Good Standing') }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Placement Readiness Card -->
+    <div class="stat-card" style="border-top: 3px solid #8b5cf6;">
+      <div class="stat-icon-wrapper stat-icon-purple">💼</div>
+      <div class="stat-content">
+        <div class="stat-label">Placement Readiness</div>
+        <div class="stat-value">
+          {{ student_data.placement_profile.readiness_percentage if student_data.placement_profile else 'N/A' }}%
+        </div>
+        <div class="stat-subtext">
+          Target: {{ student_data.placement_profile.target_role if student_data.placement_profile else 'Software Engineer' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Learning Progress Card -->
+    <div class="stat-card" style="border-top: 3px solid #f59e0b;">
+      <div class="stat-icon-wrapper stat-icon-amber">📚</div>
+      <div class="stat-content">
+        <div class="stat-label">Learning Tasks</div>
+        <div class="stat-value">
+          {{ student_data.completed_tasks }} / {{ student_data.total_tasks }}
+        </div>
+        <div class="stat-subtext">
+          {% if student_data.total_tasks > 0 %}
+            {{ (student_data.completed_tasks / student_data.total_tasks * 100)|round(1) }}% completed
+          {% else %}
+            0 tasks assigned
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Pending Actions Card -->
+    <div class="stat-card" style="border-top: 3px solid {{ '#ef4444' if student_data.notifications|length > 0 else '#10b981' }};">
+      <div class="stat-icon-wrapper {{ 'stat-icon-red' if student_data.notifications|length > 0 else 'stat-icon-green' }}">
+        ⚡
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Pending Actions</div>
+        <div class="stat-value">
+          {{ student_data.notifications|length }}
+        </div>
+        <div class="stat-subtext">
+          {{ student_data.recommendations|length }} active recommendations
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Two-Column Core Layout: Attendance & Academics -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+    
+    <!-- ATTENDANCE OVERVIEW PANEL -->
+    <div class="card" id="attendance-section" style="margin-bottom: 0;">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="card-title">🕒 Attendance Compliance & Trend</span>
+        <a href="{{ url_for('attendance.student_view', student_id=student.student_id) }}" class="btn btn-secondary btn-sm">Full History →</a>
+      </div>
+      <div class="card-body">
+        {% if student_data.att_data.is_below_warning %}
+          <div style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.82rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>⚠️</span>
+            <span><strong>Policy Alert:</strong> Your attendance is below the mandatory 75% institutional cutoff. Please attend upcoming lectures to avoid exam condonation penalty.</span>
+          </div>
+        {% endif %}
+
+        <!-- Quick Stats Breakdown -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 1.25rem; text-align: center;">
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.6rem;">
+            <div style="font-size: 0.7rem; color: #64748b; font-weight: 600;">PRESENT</div>
+            <div style="font-size: 1.15rem; font-weight: 700; color: #10b981;">{{ student_data.att_data.present_count }}</div>
+          </div>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.6rem;">
+            <div style="font-size: 0.7rem; color: #64748b; font-weight: 600;">ABSENT</div>
+            <div style="font-size: 1.15rem; font-weight: 700; color: #ef4444;">{{ student_data.att_data.absent_count }}</div>
+          </div>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.6rem;">
+            <div style="font-size: 0.7rem; color: #64748b; font-weight: 600;">APPROVED LEAVE</div>
+            <div style="font-size: 1.15rem; font-weight: 700; color: #2563eb;">{{ student_data.att_data.leave_count }}</div>
+          </div>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.6rem;">
+            <div style="font-size: 0.7rem; color: #64748b; font-weight: 600;">TOTAL SESSIONS</div>
+            <div style="font-size: 1.15rem; font-weight: 700; color: #0f172a;">{{ student_data.att_data.total_sessions }}</div>
+          </div>
+        </div>
+
+        <!-- Subject Attendance Progress -->
+        <h4 style="font-size: 0.85rem; font-weight: 700; color: #1e293b; margin: 0 0 0.6rem 0;">Subject Compliance Breakdown</h4>
+        <div style="display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 1.25rem;">
+          {% for s in student_data.subject_attendance_list %}
+            <div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 0.2rem;">
+                <span style="font-weight: 600; color: #334155;">{{ s.subject }}</span>
+                <span style="font-weight: 700; color: {{ '#10b981' if s.percentage >= 75 else '#ef4444' }};">
+                  {{ s.percentage }}% ({{ s.present }}/{{ s.total }})
+                </span>
+              </div>
+              <div class="progress-bar-container" style="height: 6px; margin-top: 0;">
+                <div class="progress-bar-fill {{ 'fill-green' if s.percentage >= 75 else 'fill-red' }}" style="width: {{ s.percentage }}%;"></div>
+              </div>
+            </div>
+          {% else %}
+            <p style="font-size: 0.8rem; color: #94a3b8; margin: 0;">No subject attendance records found.</p>
+          {% endfor %}
+        </div>
+
+        <!-- Monthly Attendance Trend Chart -->
+        <h4 style="font-size: 0.85rem; font-weight: 700; color: #1e293b; margin: 0 0 0.5rem 0;">Monthly Attendance Trajectory</h4>
+        <div style="height: 160px; position: relative;">
+          <canvas id="studentAttendanceTrendChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACADEMIC PERFORMANCE PANEL -->
+    <div class="card" id="academic-section" style="margin-bottom: 0;">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="card-title">🎓 Academic Mastery & Scores</span>
+        <span class="badge badge-info">Semester {{ student.semester }}</span>
+      </div>
+      <div class="card-body">
+        <!-- CGPA & Standing Banner -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.85rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">CUMULATIVE CGPA</div>
+            <div style="font-size: 1.4rem; font-weight: 700; color: #2563eb;">
+              {{ student_data.academic_record.cgpa if student_data.academic_record and student_data.academic_record.cgpa else (student_data.academic_record.gpa if student_data.academic_record else 'N/A') }} / 10.0
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">ACTIVE BACKLOGS</div>
+            <div style="font-size: 1.15rem; font-weight: 700; color: {{ '#10b981' if not student_data.academic_record or student_data.academic_record.backlogs_count == 0 else '#ef4444' }};">
+              {{ student_data.academic_record.backlogs_count if student_data.academic_record else '0' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Subject Scores Table -->
+        <div class="table-responsive" style="max-height: 220px; overflow-y: auto; margin-bottom: 1rem;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>Internal</th>
+                <th>External</th>
+                <th>Total</th>
+                <th>Grade</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for sub in student_data.subject_scores %}
+                <tr>
+                  <td>
+                    <strong style="color: #1e293b; font-size: 0.8rem;">{{ sub.subject_name }}</strong>
+                    <div style="font-size: 0.7rem; color: #64748b;">{{ sub.subject_code }}</div>
+                  </td>
+                  <td>{{ sub.internal_marks }}/30</td>
+                  <td>{{ sub.external_marks }}/70</td>
+                  <td>
+                    <span style="font-weight: 700; color: {{ '#10b981' if sub.marks_obtained >= 75 else ('#f59e0b' if sub.marks_obtained >= 50 else '#ef4444') }};">
+                      {{ sub.marks_obtained }}%
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge {{ 'badge-success' if sub.is_passed else 'badge-danger' }}">{{ sub.grade or 'P' }}</span>
+                  </td>
+                </tr>
+              {% else %}
+                <tr>
+                  <td colspan="5" style="text-align: center; color: #94a3b8; font-size: 0.8rem;">No subject scores recorded yet.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Strengths vs Focus Areas -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 0.6rem;">
+            <div style="font-size: 0.72rem; color: #166534; font-weight: 700; margin-bottom: 0.25rem;">🌟 STRONG SUBJECTS</div>
+            {% for s in student_data.strong_subjects %}
+              <div style="font-size: 0.75rem; color: #15803d;">&bull; {{ s.subject_name }} ({{ s.marks_obtained }}%)</div>
+            {% else %}
+              <div style="font-size: 0.75rem; color: #166534;">Consistent scores across all subjects.</div>
+            {% endfor %}
+          </div>
+
+          <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 0.6rem;">
+            <div style="font-size: 0.72rem; color: #991b1b; font-weight: 700; margin-bottom: 0.25rem;">🎯 FOCUS AREAS</div>
+            {% for w in student_data.weak_subjects %}
+              <div style="font-size: 0.75rem; color: #b91c1c;">&bull; {{ w.subject_name }} ({{ w.marks_obtained }}%)</div>
+            {% else %}
+              <div style="font-size: 0.75rem; color: #991b1b;">No critical subject weaknesses detected.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 4. Explainable Student Success Score Engine (7-Indicator Multi-Dimensional Model) -->
+  <div class="card" id="success-score-section" style="margin-bottom: 1.5rem; border-top: 4px solid {{ student_data.score_data.status_color if (student_data.score_data and student_data.score_data.status_color) else '#0d9488' }};">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <span class="card-title">🎯 Student Success Index & Explainable Score (7-Indicator Model)</span>
+        <div style="font-size: 0.75rem; color: #64748b;">Multi-dimensional composite scoring synthesized across academic, attendance, placement, and skill factors.</div>
+      </div>
+      <span class="badge" style="background: {{ student_data.score_data.status_color if (student_data.score_data and student_data.score_data.status_color) else '#0d9488' }}; color: #fff;">
+        {{ student_data.score_data.status_label if (student_data.score_data and student_data.score_data.status_label) else 'Good Standing' }}
+      </span>
+    </div>
+    <div class="card-body">
+      
+      <!-- Top Row: Score Display + Explainability Overview -->
+      <div style="display: grid; grid-template-columns: 2fr 3fr; gap: 1.5rem; align-items: center; margin-bottom: 1.5rem;">
+        
+        <!-- Score Circular Gauge / Status Box -->
+        <div style="text-align: center; padding: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+          <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Composite Student Success Score</div>
+          <div style="font-size: 3.2rem; font-weight: 800; color: {{ student_data.score_data.status_color if (student_data.score_data and student_data.score_data.status_color) else '#0d9488' }}; line-height: 1.1; margin: 0.35rem 0;">
+            {{ student_data.score_data.score if (student_data.score_data and student_data.score_data.score is not none) else 'N/A' }}
+          </div>
+          <div style="font-size: 0.88rem; font-weight: 600; color: #1e293b; margin-bottom: 0.5rem;">
+            Out of 100 Points &bull; Status: <strong style="color: {{ student_data.score_data.status_color if (student_data.score_data and student_data.score_data.status_color) else '#0d9488' }};">{{ student_data.score_data.status_label if (student_data.score_data and student_data.score_data.status_label) else 'Good Standing' }}</strong>
+          </div>
+          <p style="font-size: 0.78rem; color: #475569; margin: 0 0 0.75rem 0; line-height: 1.4;">
+            {{ student_data.score_data.status_description if (student_data.score_data and student_data.score_data.status_description) else 'Student shows steady academic progress and engagement.' }}
+          </p>
+          
+          {% if student_data.score_data and student_data.score_data.matched_segments %}
+            <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; justify-content: center;">
+              {% for seg in student_data.score_data.matched_segments %}
+                <span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 0.7rem; border: 1px solid #bae6fd;">
+                  🏷️ {{ seg.name }}
+                </span>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- 7 Indicators Normalized Breakdown Table -->
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem;">
+          <h4 style="font-size: 0.85rem; font-weight: 700; color: #1e293b; margin: 0 0 0.75rem 0;">Normalized Indicator Contributions</h4>
+          
+          <div style="display: flex; flex-direction: column; gap: 0.55rem;">
+            {% if student_data.score_data and student_data.score_data.indicators %}
+              {% for ind in student_data.score_data.indicators %}
+                <div>
+                  <div style="display: flex; justify-content: space-between; font-size: 0.76rem; margin-bottom: 0.15rem;">
+                    <span style="color: #334155; font-weight: 600;">{{ ind.name }} <span style="color: #64748b; font-weight: normal;">(Weight: {{ ind.weight_pct }})</span></span>
+                    <span style="font-weight: 700; color: {{ '#10b981' if ind.raw_score >= 70 else ('#f59e0b' if ind.raw_score >= 50 else '#ef4444') }};">
+                      {{ ind.raw_score }}/100 &rarr; +{{ ind.weighted_contribution }} pts
+                    </span>
+                  </div>
+                  <div class="progress-bar-container" style="height: 6px; margin: 0;">
+                    <div class="progress-bar-fill {{ 'fill-green' if ind.raw_score >= 70 else ('fill-blue' if ind.raw_score >= 50 else 'fill-red') }}" style="width: {{ ind.raw_score }}%;"></div>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <p style="color: #94a3b8; font-size: 0.8rem;">Calculating indicator contributions...</p>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Row: Positive Contributors vs Areas Requiring Improvement -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+        
+        <!-- Positive Contributors -->
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.85rem;">
+          <div style="font-size: 0.8rem; color: #166534; font-weight: 700; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
+            <span>🌟</span> <span>POSITIVE SCORE CONTRIBUTORS</span>
+          </div>
+          {% if student_data.score_data and student_data.score_data.positive_contributors %}
+            <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+              {% for p in student_data.score_data.positive_contributors %}
+                <div style="font-size: 0.78rem; color: #15803d; display: flex; justify-content: space-between;">
+                  <span>&bull; <strong>{{ p.name }}</strong> ({{ p.description }})</span>
+                  <span style="font-weight: 700;">{{ p.raw_score }}%</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p style="font-size: 0.78rem; color: #166534; margin: 0;">Balanced performance across baseline indicators.</p>
+          {% endif %}
+        </div>
+
+        <!-- Areas Requiring Improvement -->
+        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 0.85rem;">
+          <div style="font-size: 0.8rem; color: #991b1b; font-weight: 700; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
+            <span>🎯</span> <span>AREAS REQUIRING IMPROVEMENT</span>
+          </div>
+          {% if student_data.score_data and student_data.score_data.improvement_areas %}
+            <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+              {% for im in student_data.score_data.improvement_areas %}
+                <div style="font-size: 0.78rem; color: #b91c1c; display: flex; justify-content: space-between;">
+                  <span>&bull; <strong>{{ im.name }}</strong> ({{ im.description }})</span>
+                  <span style="font-weight: 700;">{{ im.raw_score }}%</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p style="font-size: 0.78rem; color: #166534; margin: 0;">Excellent! All 7 dimensions meet or exceed 70% benchmarks.</p>
+          {% endif %}
+        </div>
+
+      </div>
+
+      <!-- Explainability Transparency Note -->
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.76rem; color: #64748b; line-height: 1.4;">
+        ℹ️ <strong>Scoring Methodology:</strong> Success Score = (Academic &times; 30%) + (Attendance &times; 20%) + (Placement &times; 15%) + (Skills &times; 10%) + (LMS &times; 10%) + (Engagement &times; 10%) + (Feedback &times; 5%). Scores reflect historical institutional engagement indicators designed for academic advising and mentorship, and do not represent deterministic guarantees of future performance.
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 5. Placement & Learning Drills -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+    
+    <!-- PLACEMENT READINESS -->
+    <div class="card" id="placement-section" style="margin-bottom: 0;">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="card-title">💼 Placement Preparation & Drills</span>
+        <a href="{{ url_for('placement.index') }}" class="btn btn-secondary btn-sm">Placement Hub →</a>
+      </div>
+      <div class="card-body">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <div>
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">TARGET ROLE</div>
+            <div style="font-size: 1.05rem; font-weight: 700; color: #1e293b;">
+              {{ student_data.placement_profile.target_role if student_data.placement_profile else 'Software Developer' }}
+            </div>
+          </div>
+          <span class="badge badge-purple">{{ student_data.placement_profile.placement_status if student_data.placement_profile else 'Active Seeking' }}</span>
+        </div>
+
+        <!-- 4 Placement Pillars -->
+        <div style="display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 1.25rem;">
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 0.15rem;">
+              <span>💻 Coding & Algorithms (35% wt)</span>
+              <strong>{{ student_data.placement_profile.coding_score if student_data.placement_profile else 0 }}%</strong>
+            </div>
+            <div class="progress-bar-container" style="height: 6px;"><div class="progress-bar-fill fill-blue" style="width: {{ student_data.placement_profile.coding_score if student_data.placement_profile else 0 }}%;"></div></div>
+          </div>
+
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 0.15rem;">
+              <span>🧩 Quantitative Aptitude (25% wt)</span>
+              <strong>{{ student_data.placement_profile.aptitude_score if student_data.placement_profile else 0 }}%</strong>
+            </div>
+            <div class="progress-bar-container" style="height: 6px;"><div class="progress-bar-fill fill-green" style="width: {{ student_data.placement_profile.aptitude_score if student_data.placement_profile else 0 }}%;"></div></div>
+          </div>
+
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 0.15rem;">
+              <span>🗣️ Communication & Soft Skills (20% wt)</span>
+              <strong>{{ student_data.placement_profile.communication_score if student_data.placement_profile else 0 }}%</strong>
+            </div>
+            <div class="progress-bar-container" style="height: 6px;"><div class="progress-bar-fill fill-amber" style="width: {{ student_data.placement_profile.communication_score if student_data.placement_profile else 0 }}%;"></div></div>
+          </div>
+
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 0.15rem;">
+              <span>🎙️ Mock Interview & Resume (20% wt)</span>
+              <strong>{{ student_data.placement_profile.interview_score if student_data.placement_profile else 0 }}%</strong>
+            </div>
+            <div class="progress-bar-container" style="height: 6px;"><div class="progress-bar-fill fill-purple" style="width: {{ student_data.placement_profile.interview_score if student_data.placement_profile else 0 }}%;"></div></div>
+          </div>
+        </div>
+
+        <!-- Direct CTA to Code Editor -->
+        <a href="{{ url_for('placement.editor') }}" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; gap: 0.5rem; text-decoration: none;">
+          ⚡ Launch Interactive Code Editor & Compiler
+        </a>
+      </div>
+    </div>
+
+    <!-- PERSONALIZED LEARNING PLANS -->
+    <div class="card" id="learning-section" style="margin-bottom: 0;">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="card-title">📚 Personalized Learning & Tasks</span>
+        <a href="{{ url_for('learning.index') }}" class="btn btn-secondary btn-sm">Learning Plans →</a>
+      </div>
+      <div class="card-body">
+        {% if student_data.learning_plans %}
+          {% for plan in student_data.learning_plans %}
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.85rem; margin-bottom: 0.75rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                <strong style="font-size: 0.85rem; color: #1e293b;">{{ plan.title }}</strong>
+                <span class="badge badge-info">{{ plan.target_skill }}</span>
+              </div>
+              <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.4rem;">
+                Goal: {{ plan.weekly_goal_hours }} hrs/week &bull; Progress: {{ plan.progress_percentage }}%
+              </div>
+              <div class="progress-bar-container" style="height: 6px; margin-bottom: 0.6rem;">
+                <div class="progress-bar-fill fill-blue" style="width: {{ plan.progress_percentage }}%;"></div>
+              </div>
+
+              <!-- Top pending tasks -->
+              <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                {% for task in plan.tasks[:3] %}
+                  <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: #334155;">
+                    <span>{{ '✅' if task.is_completed else '⬜' }}</span>
+                    <span style="{{ 'text-decoration: line-through; color: #94a3b8;' if task.is_completed else '' }}">{{ task.title }}</span>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div style="text-align: center; padding: 2rem; color: #94a3b8;">
+            <p style="font-size: 0.85rem;">No active learning plans assigned yet.</p>
+            <a href="{{ url_for('learning.index') }}" class="btn btn-primary btn-sm">Browse Learning Assistant</a>
+          </div>
+        {% endif %}
+
+        <div style="margin-top: 0.75rem; display: flex; gap: 0.75rem;">
+          <a href="{{ url_for('career.index') }}" class="btn btn-secondary btn-sm" style="flex: 1; text-align: center;">
+            🎯 Career Skill Matcher
+          </a>
+          <a href="{{ url_for('coding_lab.dashboard') }}" class="btn btn-secondary btn-sm" style="flex: 1; text-align: center;">
+            🧩 Coding Practice Lab
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 6. Recommendations & Action Items -->
+  <div class="card" id="recommendations-section" style="margin-bottom: 1.5rem;">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <span class="card-title">💡 Actionable Intervention Recommendations</span>
+        <div style="font-size: 0.75rem; color: #64748b;">Tailored next steps prioritized from attendance, academic mastery, LMS engagement, and placement assessments.</div>
+      </div>
+      <span class="badge badge-success">{{ student_data.recommendations|length }} Action Items</span>
+    </div>
+    <div class="card-body">
+      {% if student_data.recommendations %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem;">
+          {% for rec in student_data.recommendations %}
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem; display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                  <span class="badge {{ 'badge-danger' if rec.priority == 'High' else ('badge-warning' if rec.priority == 'Medium' else 'badge-info') }}">
+                    {{ rec.priority }} Priority
+                  </span>
+                  <span style="font-size: 0.72rem; color: #64748b; font-weight: 600;">{{ rec.category }}</span>
+                </div>
+                <h4 style="font-size: 0.92rem; font-weight: 700; color: #1e293b; margin: 0 0 0.35rem 0;">{{ rec.title }}</h4>
+                <p style="font-size: 0.78rem; color: #475569; margin: 0 0 0.5rem 0;">{{ rec.reason }}</p>
+                
+                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.65rem; font-size: 0.75rem; color: #0284c7; margin-bottom: 0.6rem;">
+                  👉 <strong>Next Action:</strong> {{ rec.suggested_action }}
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.72rem; color: #64748b; margin-bottom: 0.5rem;">
+                  <div>👤 <strong>Role:</strong> {{ rec.responsible_role or 'Faculty Mentor' }}</div>
+                  <div>⏳ <strong>Target:</strong> {{ rec.suggested_deadline or 'Within 7 days' }}</div>
+                </div>
+              </div>
+              
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 0.6rem;">
+                <span class="badge {{ 'badge-success' if rec.status == 'Completed' else ('badge-warning' if rec.status == 'In Progress' else 'badge-info') }}">
+                  {{ rec.status }}
+                </span>
+                {% if rec.category == 'Placement' or rec.category == 'Skills' %}
+                  <a href="{{ url_for('placement.editor') }}" class="btn btn-primary btn-sm">Practice Drill →</a>
+                {% elif rec.category == 'Attendance' %}
+                  <a href="{{ url_for('attendance.student_view', student_id=student.student_id) }}" class="btn btn-secondary btn-sm">Review Attendance →</a>
+                {% else %}
+                  <a href="{{ url_for('learning.index') }}" class="btn btn-secondary btn-sm">Open Module →</a>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 2rem; color: #94a3b8;">
+          <p style="font-size: 0.85rem;">You are performing well with no immediate high-priority interventions.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 7. Support & Institutional Feedback Eligibility Hub -->
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+    
+    <!-- NOTIFICATIONS & EVENTS HUB -->
+    <div class="card" id="notifications-section" style="margin-bottom: 0;">
+      <div class="card-header">
+        <span class="card-title">🔔 System Notifications & Upcoming Follow-ups</span>
+      </div>
+      <div class="card-body">
+        {% if student_data.notifications %}
+          <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+            {% for n in student_data.notifications %}
+              <div style="background: #f8fafc; border-left: 4px solid {{ '#ef4444' if n.type == 'warning' else ('#2563eb' if n.type == 'action' else '#10b981') }}; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <strong style="font-size: 0.82rem; color: #1e293b;">{{ n.title }}</strong>
+                  <p style="font-size: 0.78rem; color: #475569; margin: 0.15rem 0 0 0;">{{ n.message }}</p>
+                </div>
+                <a href="{{ n.link }}" class="btn btn-secondary btn-sm">View →</a>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 1.5rem; color: #10b981;">
+            <span>✅ All tasks and notifications are up to date!</span>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- MENTOR & FEEDBACK STATUS -->
+    <div class="card" style="margin-bottom: 0;">
+      <div class="card-header">
+        <span class="card-title">🧑‍🏫 Faculty Mentor</span>
+      </div>
+      <div class="card-body">
+        {% if student_data.mentor %}
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+            <div style="width: 42px; height: 42px; border-radius: 50%; background: #2563eb; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700;">
+              {{ student_data.mentor.full_name[:2].upper() }}
+            </div>
+            <div>
+              <strong style="font-size: 0.85rem; color: #1e293b;">{{ student_data.mentor.full_name }}</strong>
+              <div style="font-size: 0.75rem; color: #64748b;">{{ student_data.mentor.department or 'Department Mentor' }}</div>
+            </div>
+          </div>
+          <div style="font-size: 0.75rem; color: #475569; margin-bottom: 0.75rem;">
+            📧 {{ student_data.mentor.email }}
+          </div>
+        {% else %}
+          <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem;">Department Faculty Mentor Assigned.</p>
+        {% endif %}
+
+        <!-- Feedback Eligibility Status Box -->
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 0.75rem;">
+          <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; margin-bottom: 0.25rem;">FEEDBACK ELIGIBILITY</div>
+          {% if student_data.is_feedback_eligible %}
+            <span class="badge badge-success">✓ Eligible to Submit (Both &ge;75%)</span>
+          {% else %}
+            <span class="badge badge-warning">🔒 Locked (Needs &ge;75% Attendance & LMS)</span>
+          {% endif %}
+          <div style="margin-top: 0.5rem;">
+            <a href="{{ url_for('students.view_student', student_id=student.student_id) }}" class="btn btn-secondary btn-sm" style="width: 100%; text-align: center;">
+              Open Feedback Portal
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

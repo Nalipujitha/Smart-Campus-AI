@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Topic Mastery & Placement Readiness - Coding Lab{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coding_lab.css') }}">
+
+<div class="student-dashboard-wrapper">
+  
+  <!-- 1. Header & Navigation -->
+  <div class="coding-lab-header">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+        <span class="badge" style="background: #2563eb; color: #fff; font-size: 0.72rem;">CODING LAB</span>
+        <span style="font-size: 0.8rem; color: #94a3b8;">Skill Analytics & Placement Alignment</span>
+      </div>
+      <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin: 0;">
+        Topic Mastery & Progress 📈
+      </h2>
+      <p style="color: #94a3b8; font-size: 0.88rem; margin: 0.25rem 0 0 0;">
+        Review your technical concept coverage and how practice feeds your campus placement profile.
+      </p>
+    </div>
+
+    <!-- Navigation Pills -->
+    <div class="coding-nav-pills">
+      <a href="{{ url_for('coding_lab.dashboard') }}">
+        📊 Overview
+      </a>
+      <a href="{{ url_for('coding_lab.practice_catalog') }}">
+        🧩 Practice Problems
+      </a>
+      <a href="{{ url_for('coding_lab.submissions_list') }}">
+        📜 Submissions
+      </a>
+      <a href="{{ url_for('coding_lab.progress_view') }}" class="active">
+        📈 Topic Mastery
+      </a>
+    </div>
+  </div>
+
+  <!-- 2. Placement Readiness Impact Banner -->
+  <div class="card" style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 1px solid #4338ca; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <span class="badge" style="background: #4f46e5; color: #fff; font-size: 0.75rem; margin-bottom: 0.5rem;">PLACEMENT ALIGNMENT</span>
+        <h3 style="font-size: 1.3rem; font-weight: 700; color: #e0e7ff; margin: 0 0 0.35rem 0;">
+          Placement Coding Readiness Score
+        </h3>
+        <p style="color: #cbd5e1; font-size: 0.88rem; margin: 0; max-width: 600px;">
+          The platform combines your solved problems ratio, average submission accuracy, and algorithmic diversity to evaluate your placement coding score.
+        </p>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 1.5rem;">
+        <div style="text-align: right;">
+          <div style="font-size: 0.8rem; color: #94a3b8; text-transform: uppercase;">Current Score</div>
+          <div style="font-size: 2rem; font-weight: 800; color: #a5b4fc;">
+            {{ placement_profile.coding_score if placement_profile and placement_profile.coding_score is not none else '0.0' }}%
+          </div>
+        </div>
+        <a href="{{ url_for('placement.index') }}" class="btn btn-primary" style="background: #4f46e5; border: none; padding: 0.6rem 1.25rem;">
+          View Placement Portal &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Topic-Wise Breakdown Grid -->
+  <div class="card" style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1.5rem;">
+    <h3 style="font-size: 1.15rem; font-weight: 600; color: #f0f6fc; margin: 0 0 1.25rem 0;">
+      Topic-Wise Proficiency & Points
+    </h3>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem;">
+      {% for item in topic_metrics %}
+      <div style="background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 1.15rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+          <div>
+            <h4 style="font-size: 0.95rem; font-weight: 600; color: #f0f6fc; margin: 0 0 0.2rem 0;">
+              {{ item.name }}
+            </h4>
+            <span style="font-size: 0.78rem; color: #8b949e;">
+              {{ item.solved }} of {{ item.total }} solved ({{ item.percentage }}%)
+            </span>
+          </div>
+          <span class="badge" style="background: {{ '#238636' if item.percentage >= 50 else '#21262d' }}; color: {{ '#fff' if item.percentage >= 50 else '#8b949e' }}; border: 1px solid #30363d;">
+            {{ item.points_earned }} / {{ item.points_total }} pts
+          </span>
+        </div>
+
+        <!-- Progress Bar -->
+        <div style="background: #161b22; height: 8px; border-radius: 4px; overflow: hidden; margin: 0.75rem 0;">
+          <div style="background: {{ '#22c55e' if item.percentage >= 75 else '#3b82f6' if item.percentage >= 30 else '#6b7280' }}; height: 100%; width: {{ item.percentage }}%;"></div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end;">
+          <a href="{{ url_for('coding_lab.practice_catalog') }}?topic={{ item.name|urlencode }}" style="font-size: 0.78rem; color: #58a6ff; text-decoration: none;">
+            Practice {{ item.name }} &rarr;
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

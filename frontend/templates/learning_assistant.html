@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Personalized Learning Assistant - Smart Campus Analytics{% endblock %}
+{% block header_title %}Personalized Learning Tracks & Adaptive Study Plans{% endblock %}
+
+{% block header_actions %}
+  {% if current_user.role != 'Student' and all_students %}
+    <form method="GET" action="{{ url_for('learning.index') }}" style="display: flex; gap: 0.5rem;">
+      <select name="student_id" class="form-select" onchange="this.form.submit()">
+        {% for s in all_students %}
+          <option value="{{ s.student_id }}" {% if selected_student_id == s.student_id %}selected{% endif %}>
+            {{ s.student_id }} - {{ s.full_name }}
+          </option>
+        {% endfor %}
+      </select>
+    </form>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<!-- Student Info & Create Plan Bar -->
+<div class="card">
+  <div class="card-body" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--primary-navy);">
+        Learning Dossier: {{ student.full_name if student else 'Selected Student' }} ({{ student.student_id if student else '-' }})
+      </h3>
+      <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
+        Department: <strong>{{ student.department if student else '-' }}</strong> | Academic Year {{ student.academic_year if student else '-' }}
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="document.getElementById('createPlanModal').style.display='block'">
+      + Create Personalized Study Plan
+    </button>
+  </div>
+</div>
+
+<!-- Weak Subject Areas Identified -->
+{% if weak_subjects %}
+<div class="card" style="border-left: 4px solid var(--warning);">
+  <div class="card-header">
+    <span class="card-title">⚠️ Identified Subject Weak Spots Requiring Focus</span>
+  </div>
+  <div class="card-body" style="padding: 0;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Subject Code</th>
+          <th>Subject Name</th>
+          <th>Marks / Performance</th>
+          <th>Grade</th>
+          <th>Suggested Focus</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for w in weak_subjects %}
+          <tr>
+            <td><strong>{{ w.subject_code }}</strong></td>
+            <td>{{ w.subject_name }}</td>
+            <td>
+              <span style="font-weight: 700; color: {% if w.percentage < 50 %}#ef4444{% else %}#f59e0b{% endif %};">
+                {{ w.percentage }}%
+              </span>
+            </td>
+            <td><span class="badge {% if w.grade == 'F' %}badge-danger{% else %}badge-warning{% endif %}">{{ w.grade or 'C' }}</span></td>
+            <td>
+              <form method="POST" action="{{ url_for('learning.create_plan') }}" style="display:inline;">
+                <input type="hidden" name="student_id" value="{{ student.student_id }}">
+                <input type="hidden" name="skill_topic" value="{{ w.subject_name }}">
+                <button type="submit" class="btn btn-secondary btn-sm">Generate Learning Track →</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Active Learning Plans -->
+<h3 style="font-size: 1.15rem; font-weight: 700; color: var(--primary-navy); margin-bottom: 1rem;">
+  📚 Active Learning Plans & Weekly Tasks
+</h3>
+
+{% if plans %}
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    {% for plan in plans %}
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <strong style="color: var(--primary-navy); font-size: 0.95rem;">{{ plan.title }}</strong>
+            <div style="font-size: 0.75rem; color: #64748b;">Goal: {{ plan.weekly_goal_hours }} hrs/week | Skill: {{ plan.target_skill }}</div>
+          </div>
+          <span class="badge {% if plan.status == 'Completed' %}badge-success{% else %}badge-info{% endif %}">
+            {{ plan.status }}
+          </span>
+        </div>
+        <div class="card-body">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-size: 0.85rem;">
+            <span>Track Progress</span>
+            <strong id="plan-progress-{{ plan.id }}">{{ plan.progress_percentage }}%</strong>
+          </div>
+          <div class="progress-bar-container" style="margin-bottom: 1rem;">
+            <div id="plan-bar-{{ plan.id }}" class="progress-bar-fill {% if plan.progress_percentage == 100 %}fill-green{% else %}fill-blue{% endif %}" style="width: {{ plan.progress_percentage }}%;"></div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+            {% for task in plan.tasks %}
+              <label style="display: flex; align-items: flex-start; gap: 0.65rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.6rem 0.85rem; cursor: pointer;">
+                <input type="checkbox" {% if task.is_completed %}checked{% endif %} onchange="toggleLearningTask({{ task.id }}, this.checked)" style="margin-top: 0.2rem;">
+                <div style="flex: 1;">
+                  <div style="font-size: 0.85rem; font-weight: 600; color: {% if task.is_completed %}#94a3b8; text-decoration: line-through;{% else %}#0f172a;{% endif %}">
+                    {{ task.title }}
+                  </div>
+                  <div style="font-size: 0.75rem; color: #64748b;">
+                    {{ task.resource_type }} • ~{{ task.estimated_minutes }} mins
+                  </div>
+                </div>
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card">
+    <div class="card-body" style="text-align: center; padding: 2.5rem; color: #64748b;">
+      No active learning plans created for this student yet. Click "+ Create Personalized Study Plan" to generate one.
+    </div>
+  </div>
+{% endif %}
+
+<!-- Create Study Plan Modal -->
+<div id="createPlanModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center;">
+  <div style="background: white; border-radius: 10px; max-width: 480px; width: 90%; margin: 10vh auto; padding: 1.75rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--primary-navy);">Create Personalized Study Plan</h3>
+      <button onclick="document.getElementById('createPlanModal').style.display='none'" style="background:none; border:none; font-size: 1.25rem; cursor:pointer;">✕</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('learning.create_plan') }}">
+      <input type="hidden" name="student_id" value="{{ student.student_id if student else 'STU2024001' }}">
+
+      <div class="form-group" style="margin-bottom: 0.85rem;">
+        <label for="planSkillTopic">Select Subject / Topic</label>
+        <select name="skill_topic" id="planSkillTopic" class="form-select" required>
+          {% for topic in catalog.keys() %}
+            <option value="{{ topic }}">{{ topic }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="planWeeklyHours">Weekly Target Hours</label>
+        <input type="number" name="weekly_hours" id="planWeeklyHours" class="form-control" value="5.0" step="0.5" min="1" max="25" required>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('createPlanModal').style.display='none'">Cancel</button>
+        <button type="submit" class="btn btn-primary">Generate Plan & Milestones</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/learning.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block title %}Faculty Dashboard - Teaching & Mentorship Hub{% endblock %}
+{% block header_title %}Faculty Teaching & Mentorship Hub{% endblock %}
+
+{% block header_actions %}
+  <div style="display: flex; gap: 0.75rem; align-items: center;">
+    <span class="badge badge-info">{{ department }}</span>
+    <a href="{{ url_for('faculty.mark_attendance') }}" class="btn btn-primary btn-sm">📝 Mark Today's Attendance</a>
+  </div>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Faculty KPI Metric Row -->
+  <div class="metrics-grid">
+    <!-- Authorized Students -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">My Students</span>
+        <div class="metric-icon icon-blue">👥</div>
+      </div>
+      <div class="metric-value">{{ auth_students_count }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Department & Mentored Cohort</span>
+      </div>
+    </div>
+
+    <!-- Assigned Subjects -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Assigned Subjects</span>
+        <div class="metric-icon icon-purple">📚</div>
+      </div>
+      <div class="metric-value">{{ subjects|length }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">{{ subjects|join(', ')|truncate(30) }}</span>
+      </div>
+    </div>
+
+    <!-- Class Attendance -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Avg Class Attendance</span>
+        <div class="metric-icon {% if avg_attendance >= 75 %}icon-green{% else %}icon-amber{% endif %}">📅</div>
+      </div>
+      <div class="metric-value">{{ avg_attendance }}%</div>
+      <div class="metric-footer">
+        <span class="status-indicator {% if avg_attendance >= 75 %}status-good{% else %}status-warning{% endif %}"></span>
+        <span class="metric-trend">{{ total_sessions_taken }} Sessions Recorded</span>
+      </div>
+    </div>
+
+    <!-- Academic Mean -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Subject GPA Average</span>
+        <div class="metric-icon icon-blue">📈</div>
+      </div>
+      <div class="metric-value">{{ avg_gpa }} <span style="font-size: 0.85rem; color: #64748b; font-weight: normal;">/ 10</span></div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Department Performance</span>
+      </div>
+    </div>
+
+    <!-- Students Requiring Attention -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Attention Required</span>
+        <div class="metric-icon icon-red">⚠️</div>
+      </div>
+      <div class="metric-value" style="color: #dc2626;">{{ students_requiring_attention|length }}</div>
+      <div class="metric-footer">
+        <span class="status-indicator status-danger"></span>
+        <span class="metric-trend">Attendance or Academic Risk</span>
+      </div>
+    </div>
+
+    <!-- Pending Mentoring Follow-ups -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Pending Follow-ups</span>
+        <div class="metric-icon icon-amber">🩺</div>
+      </div>
+      <div class="metric-value" style="color: #d97706;">{{ pending_followups|length }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Open Mentoring Cases</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Faculty Layout -->
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+    
+    <!-- Students Requiring Attention Table -->
+    <div class="card">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="card-title">🚨 Students Requiring Immediate Academic / Attendance Support</span>
+        <a href="{{ url_for('faculty.at_risk') }}" class="btn btn-secondary btn-sm">View All</a>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Semester</th>
+              <th>Risk Level</th>
+              <th>Key Concern</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in students_requiring_attention %}
+            {% set s = item.student %}
+            <tr>
+              <td>
+                <div style="font-weight: 600;">{{ s.full_name }}</div>
+                <div style="font-size: 0.75rem; color: #64748b; font-family: monospace;">{{ s.student_id }}</div>
+              </td>
+              <td>Sem {{ s.semester }} (Sec {{ s.section }})</td>
+              <td>
+                <span class="badge {% if item.risk_level == 'High' %}badge-danger{% else %}badge-warning{% endif %}">
+                  {{ item.risk_level }}
+                </span>
+              </td>
+              <td style="font-size: 0.8rem; color: #475569; max-width: 250px;">
+                {{ item.risk_factors|join(', ')|truncate(50) }}
+              </td>
+              <td>
+                <a href="{{ url_for('faculty.mentoring') }}?student_id={{ s.student_id }}" class="btn btn-primary btn-sm">Counsel →</a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5" style="text-align: center; color: #16a34a; padding: 2rem;">No students in your cohort currently trigger high risk alerts.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Quick Actions & Teaching Shortcuts -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">⚡ Faculty Actions</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <a href="{{ url_for('faculty.mark_attendance') }}" class="btn btn-primary" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>📝 Mark Daily Attendance</span>
+            <span>→</span>
+          </a>
+          <a href="{{ url_for('faculty.academics') }}" class="btn btn-secondary" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>📊 Enter Assessment Marks</span>
+            <span>→</span>
+          </a>
+          <a href="{{ url_for('faculty.mentoring') }}" class="btn btn-secondary" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>🩺 Log Mentoring Session</span>
+            <span>→</span>
+          </a>
+          <a href="{{ url_for('faculty.classes') }}" class="btn btn-secondary" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>🏫 Class Rosters & Schedule</span>
+            <span>→</span>
+          </a>
+          <a href="{{ url_for('faculty.reports') }}" class="btn btn-secondary" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>📥 Export Class CSV Sheets</span>
+            <span>→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Pending Follow-ups Widget -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📅 Mentoring Follow-ups</span>
+        </div>
+        {% for fu in pending_followups[:3] %}
+        <div style="padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9;">
+          <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.85rem;">
+            <span>{{ fu.student.full_name if fu.student else fu.student_id }}</span>
+            <span style="color: #dc2626; font-size: 0.75rem;">Due: {{ fu.follow_up_date or 'Immediate' }}</span>
+          </div>
+          <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.2rem;">{{ fu.title }}</div>
+        </div>
+        {% else %}
+        <p style="color: #94a3b8; font-size: 0.85rem; padding: 1rem 0; margin: 0; text-align: center;">No pending follow-ups scheduled.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Recent Class Attendance Sessions Recorded -->
+  <div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <span class="card-title">📅 My Recent Attendance Sessions</span>
+      <a href="{{ url_for('faculty.attendance_history') }}" class="btn btn-secondary btn-sm">Full History</a>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Class Code</th>
+            <th>Subject</th>
+            <th>Turnout</th>
+            <th>Present / Total</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in recent_sessions %}
+          {% set p_cnt = s.records.filter_by(status='Present').count() %}
+          {% set tot = s.records.count() %}
+          {% set pct = (p_cnt / tot * 100)|round(1) if tot > 0 else 0 %}
+          <tr>
+            <td style="font-size: 0.85rem; color: #64748b;">{{ s.session_date }}</td>
+            <td style="font-weight: 600;">{{ s.class_code }}</td>
+            <td>{{ s.subject }}</td>
+            <td>
+              <span class="badge {% if pct >= 75 %}badge-success{% else %}badge-warning{% endif %}">
+                {{ pct }}% Turnout
+              </span>
+            </td>
+            <td><strong>{{ p_cnt }}</strong> / {{ tot }} Students</td>
+            <td>
+              <a href="{{ url_for('faculty.session_detail', session_id=s.id) }}" class="btn btn-secondary btn-sm">View & Edit →</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" style="text-align: center; color: #94a3b8; padding: 2rem;">No sessions recorded yet. Click "Mark Today's Attendance" to record your first class session.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

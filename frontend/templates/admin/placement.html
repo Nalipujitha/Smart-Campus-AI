@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Institutional Placement Analytics - Admin Portal{% endblock %}
+{% block header_title %}Institutional Placement Analytics & Recruitment{% endblock %}
+
+{% block header_actions %}
+  <a href="{{ url_for('admin.export_csv', report_type='placement') }}" class="btn btn-secondary btn-sm">
+    📥 Export Placement CSV
+  </a>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Metrics Grid -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Placement Rate</span>
+        <div class="metric-icon icon-green">🎯</div>
+      </div>
+      <div class="metric-value">{{ placement_rate }}%</div>
+      <div class="metric-footer">
+        <span class="status-indicator status-good"></span>
+        <span class="metric-trend">{{ total_placed }} Students Placed</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Partner Companies</span>
+        <div class="metric-icon icon-purple">🏢</div>
+      </div>
+      <div class="metric-value">{{ companies|length }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Active Recruitment Partners</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Job Opportunities</span>
+        <div class="metric-icon icon-blue">💼</div>
+      </div>
+      <div class="metric-value">{{ jobs|length }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Active Drives & Internships</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Avg Readiness Score</span>
+        <div class="metric-icon icon-blue">⚡</div>
+      </div>
+      <div class="metric-value">{{ avg_readiness }}%</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Aptitude, Coding, Interview</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Job Offers Table -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">🎉 Recent Placement Offers</span>
+      <span class="badge badge-success">{{ offers|length }} Offers Recorded</span>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Company</th>
+            <th>Job Title</th>
+            <th>Package (CTC)</th>
+            <th>Offer Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in offers %}
+          <tr>
+            <td>
+              <div style="font-weight: 600;">{{ o.student.full_name if o.student else o.student_id }}</div>
+              <div style="font-size: 0.75rem; color: #64748b; font-family: monospace;">{{ o.student_id }}</div>
+            </td>
+            <td style="font-weight: 600; color: #0284c7;">{{ o.company_name }}</td>
+            <td>{{ o.job_title }}</td>
+            <td><strong style="color: #16a34a;">{{ o.ctc_package }}</strong></td>
+            <td style="font-size: 0.82rem; color: #64748b;">{{ o.offer_date }}</td>
+            <td>
+              <span class="badge badge-success">{{ o.status }}</span>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" style="text-align: center; color: #94a3b8; padding: 2rem;">No placement offers logged yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

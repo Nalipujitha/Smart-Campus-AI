@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Progress Trajectories - Faculty Portal{% endblock %}
+{% block header_title %}Student Academic & LMS Progress Tracking{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">📈 Student Engagement & Progress Matrix</span>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student ID</th>
+            <th>Full Name</th>
+            <th>Semester</th>
+            <th>Attendance %</th>
+            <th>LMS Modules Engaged</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in student_progress_list %}
+          {% set s = item.student %}
+          <tr>
+            <td style="font-family: monospace; font-weight: 700; color: #0284c7;">{{ s.student_id }}</td>
+            <td style="font-weight: 600;">{{ s.full_name }}</td>
+            <td>Sem {{ s.semester }} (Sec {{ s.section }})</td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div class="progress-bar-container" style="width: 80px;">
+                  <div class="progress-bar-fill {% if item.attendance_pct >= 75 %}fill-green{% else %}fill-amber{% endif %}" style="width: {{ item.attendance_pct }}%;"></div>
+                </div>
+                <span style="font-size: 0.8rem; font-weight: 600;">{{ item.attendance_pct }}%</span>
+              </div>
+            </td>
+            <td>{{ item.lms_count }} Modules</td>
+            <td>
+              <span class="badge {% if item.status == 'Active' %}badge-success{% else %}badge-warning{% endif %}">
+                {{ item.status }}
+              </span>
+            </td>
+            <td>
+              <a href="{{ url_for('students.view_student', student_id=s.student_id) }}" class="btn btn-secondary btn-sm">Full Profile</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

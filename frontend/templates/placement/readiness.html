@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Placement Readiness Breakdown - Placement Portal{% endblock %}
+{% block header_title %}Student Placement Readiness Breakdown{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">⚡ Multi-Domain Employability Scores</span>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Target Role</th>
+            <th>Aptitude (25%)</th>
+            <th>Coding (35%)</th>
+            <th>Communication (20%)</th>
+            <th>Interview (20%)</th>
+            <th>Composite Readiness</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in profiles %}
+          <tr>
+            <td>
+              <div style="font-weight: 600;">{{ p.student.full_name if p.student else p.student_id }}</div>
+              <div style="font-size: 0.72rem; color: #64748b; font-family: monospace;">{{ p.student_id }}</div>
+            </td>
+            <td style="font-weight: 600; color: #0284c7;">{{ p.target_role }}</td>
+            <td>{{ p.aptitude_score }}%</td>
+            <td>{{ p.coding_score }}%</td>
+            <td>{{ p.communication_score }}%</td>
+            <td>{{ p.interview_score }}%</td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div class="progress-bar-container" style="width: 80px;">
+                  <div class="progress-bar-fill {% if p.readiness_percentage >= 70 %}fill-green{% elif p.readiness_percentage >= 50 %}fill-blue{% else %}fill-amber{% endif %}" style="width: {{ p.readiness_percentage }}%;"></div>
+                </div>
+                <strong>{{ p.readiness_percentage }}%</strong>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

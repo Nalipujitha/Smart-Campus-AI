@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Placement Reports & Exports - Placement Portal{% endblock %}
+{% block header_title %}Placement Reports & Data Exports{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <div class="metrics-grid">
+    <!-- Placement Directory CSV Export -->
+    <div class="card" style="margin-bottom: 0;">
+      <div class="card-header">
+        <span class="card-title">👥 Placement Directory</span>
+      </div>
+      <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; margin-bottom: 1.25rem;">
+        Export student placement profiles, target roles, readiness scores, and current placement statuses.
+      </p>
+      <a href="{{ url_for('placement.export_csv', report_type='directory') }}" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center;">
+        📥 Download Directory CSV
+      </a>
+    </div>
+
+    <!-- Applications Pipeline Export -->
+    <div class="card" style="margin-bottom: 0;">
+      <div class="card-header">
+        <span class="card-title">📑 Job Applications Pipeline</span>
+      </div>
+      <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; margin-bottom: 1.25rem;">
+        Export all student job applications, applied positions, companies, recruitment stages, and timestamps.
+      </p>
+      <a href="{{ url_for('placement.export_csv', report_type='applications') }}" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center;">
+        📥 Download Applications CSV
+      </a>
+    </div>
+
+    <!-- Offers & Outcomes Export -->
+    <div class="card" style="margin-bottom: 0;">
+      <div class="card-header">
+        <span class="card-title">🎉 Confirmed Offers & CTC</span>
+      </div>
+      <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; margin-bottom: 1.25rem;">
+        Export all verified student placement offers, packages (CTC), company partners, and offer dates.
+      </p>
+      <a href="{{ url_for('placement.export_csv', report_type='offers') }}" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center;">
+        📥 Download Offers CSV
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

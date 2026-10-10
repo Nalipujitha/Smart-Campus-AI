@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance History - Faculty Portal{% endblock %}
+{% block header_title %}Class Attendance Session Log{% endblock %}
+
+{% block header_actions %}
+  <a href="{{ url_for('faculty.mark_attendance') }}" class="btn btn-primary btn-sm">+ Mark New Session</a>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <span class="card-title">Past Attendance Sessions</span>
+      <span class="badge badge-info">{{ sessions|length }} Recorded Sessions</span>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Class Code</th>
+            <th>Subject</th>
+            <th>Faculty</th>
+            <th>Present</th>
+            <th>Absent</th>
+            <th>Leave</th>
+            <th>Turnout %</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in sessions %}
+          {% set p_cnt = s.records.filter_by(status='Present').count() %}
+          {% set a_cnt = s.records.filter_by(status='Absent').count() %}
+          {% set l_cnt = s.records.filter_by(status='On Leave').count() %}
+          {% set tot = s.records.count() %}
+          {% set pct = (p_cnt / tot * 100)|round(1) if tot > 0 else 0 %}
+          <tr>
+            <td style="font-size: 0.85rem; color: #64748b;">{{ s.session_date }}</td>
+            <td style="font-weight: 600;">{{ s.class_code }}</td>
+            <td>{{ s.subject }}</td>
+            <td>{{ s.faculty.full_name if s.faculty else 'Department Faculty' }}</td>
+            <td style="color: #16a34a; font-weight: 600;">{{ p_cnt }}</td>
+            <td style="color: #dc2626; font-weight: 600;">{{ a_cnt }}</td>
+            <td style="color: #d97706; font-weight: 600;">{{ l_cnt }}</td>
+            <td>
+              <span class="badge {% if pct >= 75 %}badge-success{% else %}badge-warning{% endif %}">
+                {{ pct }}%
+              </span>
+            </td>
+            <td>
+              <a href="{{ url_for('faculty.session_detail', session_id=s.id) }}" class="btn btn-secondary btn-sm">Inspect / Edit</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="9" style="text-align: center; color: #94a3b8; padding: 2rem;">No attendance sessions logged.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

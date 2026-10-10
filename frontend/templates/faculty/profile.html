@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Faculty Profile - Faculty Portal{% endblock %}
+{% block header_title %}Faculty Profile & Academic Assignments{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 800px;">
+
+  <!-- Profile Card -->
+  <div class="card">
+    <div style="display: flex; gap: 1.5rem; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
+      <div style="width: 72px; height: 72px; border-radius: 50%; background: #0284c7; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; font-weight: 700;">
+        {{ user.full_name[:2].upper() }}
+      </div>
+      <div>
+        <h2 style="font-size: 1.35rem; font-weight: 700; color: #0f172a; margin: 0 0 0.25rem 0;">{{ user.full_name }}</h2>
+        <div style="font-size: 0.85rem; color: #64748b;">{{ user.email }} | Username: <strong style="color: #0284c7;">{{ user.username }}</strong></div>
+        <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+          <span class="badge badge-primary">Faculty / Academic Advisor</span>
+          <span class="badge badge-info">{{ department }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+      <div>
+        <span style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700;">Department</span>
+        <div style="font-weight: 600; color: #0f172a; margin-top: 0.25rem;">{{ department }}</div>
+      </div>
+
+      <div>
+        <span style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700;">Mentored Students</span>
+        <div style="font-weight: 600; color: #0f172a; margin-top: 0.25rem;">{{ mentored_count }} Assigned Mentees</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 1.5rem; border-top: 1px solid #f1f5f9; padding-top: 1.25rem;">
+      <span style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 0.5rem;">Assigned Teaching Curriculum</span>
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        {% for s in subjects %}
+          <span class="badge badge-secondary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">📘 {{ s }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

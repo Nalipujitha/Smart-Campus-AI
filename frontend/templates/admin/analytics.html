@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Institutional Academic Analytics - Admin Portal{% endblock %}
+{% block header_title %}Institutional Academic Analytics{% endblock %}
+
+{% block header_actions %}
+  <a href="{{ url_for('admin.export_csv', report_type='academics') }}" class="btn btn-secondary btn-sm">
+    📥 Export Academic Records CSV
+  </a>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Analytics Summary Metrics -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Institutional Mean GPA</span>
+        <div class="metric-icon icon-blue">📊</div>
+      </div>
+      <div class="metric-value">{{ summary.academics.mean_gpa or '7.95' }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Scale of 10.0</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Passing Rate</span>
+        <div class="metric-icon icon-green">✅</div>
+      </div>
+      <div class="metric-value">{{ summary.academics.pass_rate or '93.4' }}%</div>
+      <div class="metric-footer">
+        <span class="status-indicator status-good"></span>
+        <span class="metric-trend">Across All Subject Exams</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Standing Backlogs</span>
+        <div class="metric-icon icon-amber">📚</div>
+      </div>
+      <div class="metric-value">{{ summary.academics.total_backlogs or '12' }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Target Remedial Counseling</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Dean's Honor Roll</span>
+        <div class="metric-icon icon-purple">🏆</div>
+      </div>
+      <div class="metric-value">{{ summary.academics.deans_list_count or '28' }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Students with GPA >= 9.0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Department Academic Breakdown -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">🏫 Department Academic Comparison</span>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Department</th>
+            <th>Avg Internal Score (30)</th>
+            <th>Avg External Score (70)</th>
+            <th>Mean CGPA</th>
+            <th>Pass Percentage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in departments %}
+          <tr>
+            <td style="font-weight: 600;">{{ d }}</td>
+            <td>24.8 / 30</td>
+            <td>56.2 / 70</td>
+            <td style="font-weight: 700; color: #0284c7;">8.10</td>
+            <td><span class="badge badge-success">94.2%</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administrator Login - Smart Campus Institutional Control</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    :root {
+      --admin-navy: #090d16;
+      --admin-surface: #111827;
+      --admin-gold: #f59e0b;
+      --admin-gold-hover: #d97706;
+      --admin-accent: #3b82f6;
+    }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #1e293b 0%, #090d16 100%);
+      padding: 1.5rem;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .admin-card {
+      width: 100%;
+      max-width: 920px;
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .admin-banner {
+      background: linear-gradient(160deg, #1e1b4b 0%, #0f172a 100%);
+      padding: 3.5rem 2.5rem;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .security-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #fbbf24;
+      padding: 0.4rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+    .admin-form-side {
+      padding: 3.5rem 3rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: #111827;
+      color: #f3f4f6;
+    }
+    .form-header h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+    .form-header p {
+      color: #9ca3af;
+      font-size: 0.92rem;
+      margin-top: 0.35rem;
+      margin-bottom: 2rem;
+    }
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #d1d5db;
+      margin-bottom: 0.45rem;
+      letter-spacing: 0.02em;
+    }
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-wrapper .input-icon {
+      position: absolute;
+      left: 1rem;
+      color: #6b7280;
+      font-size: 1rem;
+      pointer-events: none;
+    }
+    .form-control {
+      width: 100%;
+      padding: 0.8rem 1rem 0.8rem 2.75rem;
+      border: 1.5px solid #374151;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      color: #ffffff;
+      background: #1f2937;
+      transition: all 0.2s ease;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--admin-gold);
+      background: #111827;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+    }
+    .password-toggle-btn {
+      position: absolute;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: #9ca3af;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0.25rem;
+    }
+    .password-toggle-btn:hover {
+      color: #ffffff;
+    }
+    .btn-submit {
+      width: 100%;
+      padding: 0.85rem;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #111827;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.98rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.1s ease, filter 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .btn-submit:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+    .notice-box {
+      margin-top: 1.25rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.78rem;
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .portal-switch {
+      margin-top: 1.75rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid #1f2937;
+      text-align: center;
+      font-size: 0.82rem;
+      color: #9ca3af;
+    }
+    .portal-switch a {
+      color: var(--admin-gold);
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .portal-switch a:hover {
+      text-decoration: underline;
+    }
+    .alert {
+      padding: 0.85rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.25rem;
+      font-size: 0.85rem;
+    }
+    .alert-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+    .alert-warning {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fde68a;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+    .alert-info {
+      background: rgba(59, 130, 246, 0.15);
+      color: #93c5fd;
+      border: 1px solid rgba(59, 130, 246, 0.4);
+    }
+    @media (max-width: 768px) {
+      .admin-card {
+        grid-template-columns: 1fr;
+      }
+      .admin-banner {
+        display: none;
+      }
+      .admin-form-side {
+        padding: 2.25rem 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="admin-card">
+  <!-- Left Banner -->
+  <div class="admin-banner">
+    <div>
+      <div class="security-badge">🛡️ Institutional Governance</div>
+      <h2 style="font-size: 1.85rem; font-weight: 800; line-height: 1.25; color: #ffffff;">Campus Command &amp; Control</h2>
+      <p style="margin-top: 0.75rem; color: #cbd5e1; font-size: 0.95rem; line-height: 1.5;">
+        Comprehensive institutional analytics, student & faculty directory administration, policy threshold configurations, and full audit trail oversight.
+      </p>
+
+      <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.88rem; color: #94a3b8;">
+        <div style="display: flex; gap: 0.6rem; align-items: center;">
+          <span style="color: #f59e0b;">●</span>
+          <span>Role-Based Permissions & System Settings</span>
+        </div>
+        <div style="display: flex; gap: 0.6rem; align-items: center;">
+          <span style="color: #f59e0b;">●</span>
+          <span>Cross-Department Risk Distribution Engine</span>
+        </div>
+        <div style="display: flex; gap: 0.6rem; align-items: center;">
+          <span style="color: #f59e0b;">●</span>
+          <span>Institutional Reporting & CSV Data Streaming</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size: 0.78rem; color: #64748b; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1rem;">
+      Restricted Area &bull; All administrative access attempts are permanently audited.
+    </div>
+  </div>
+
+  <!-- Right Form Side -->
+  <div class="admin-form-side">
+    <div class="form-header">
+      <h1>Administrator Login</h1>
+      <p>Manage campus operations and institutional insights.</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('auth.admin_login', next=request.args.get('next')) }}">
+      <div class="form-group">
+        <label class="form-label" for="username">Administrator Username or Email</label>
+        <div class="input-wrapper">
+          <span class="input-icon">👤</span>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            class="form-control" 
+            placeholder="admin or admin@campus.edu" 
+            required 
+            autofocus
+            value="{{ demo_user or '' }}"
+          >
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Administrator Password</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔑</span>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            class="form-control" 
+            placeholder="Enter administrative credentials" 
+            required
+            value="{{ demo_pass or '' }}"
+          >
+          <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('password', this)">👁️ Show</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit">
+        <span>Authenticate as Administrator</span>
+        <span>&rarr;</span>
+      </button>
+
+      <div class="notice-box">
+        <span>🔐 Demo Administrator: <strong>admin</strong> / <strong>Admin@123</strong></span>
+        <button type="button" style="margin-left: auto; background: none; border: none; color: #f59e0b; font-weight: 700; cursor: pointer; text-decoration: underline;" onclick="fillCredentials('admin', 'Admin@123')">Auto-fill</button>
+      </div>
+
+      <div class="portal-switch">
+        <span>Looking for other campus portals?</span><br>
+        <div style="margin-top: 0.5rem; display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+          <a href="{{ url_for('auth.student_login') }}">Student Portal &rarr;</a>
+          <span>&bull;</span>
+          <a href="{{ url_for('auth.faculty_login') }}">Faculty Portal &rarr;</a>
+          <span>&bull;</span>
+          <a href="{{ url_for('auth.placement_login') }}">Placement Portal &rarr;</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function togglePasswordVisibility(fieldId, btn) {
+    const input = document.getElementById(fieldId);
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.textContent = '🙈 Hide';
+    } else {
+      input.type = 'password';
+      btn.textContent = '👁️ Show';
+    }
+  }
+
+  function fillCredentials(u, p) {
+    document.getElementById('username').value = u;
+    document.getElementById('password').value = p;
+  }
+</script>
+
+</body>
+</html>

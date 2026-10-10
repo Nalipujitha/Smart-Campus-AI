@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Interview Preparation & Rubrics - Placement Portal{% endblock %}
+{% block header_title %}Technical & Behavioral Interview Bank{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">🎙️ Interview Questions & Behavioral Evaluation Rubrics</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+      {% for q in questions %}
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span class="badge badge-primary">{{ q.topic }}</span>
+          <span class="badge badge-info">{{ q.difficulty }}</span>
+        </div>
+        <p style="font-weight: 600; color: #0f172a; margin-bottom: 0.75rem;">{{ q.question_text }}</p>
+        <div style="font-size: 0.85rem; color: #16a34a; font-weight: 600; margin-bottom: 0.35rem;">
+          Recommended Approach: {{ q.correct_answer }}
+        </div>
+        <div style="font-size: 0.8rem; color: #64748b;">
+          Evaluation Guide: {{ q.explanation }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block title %}Placement Dashboard - Career & Recruitment Management{% endblock %}
+{% block header_title %}Placement & Recruitment Command Center{% endblock %}
+
+{% block header_actions %}
+  <div style="display: flex; gap: 0.75rem; align-items: center;">
+    <a href="{{ url_for('placement.companies') }}" class="btn btn-secondary btn-sm">+ Add Recruiter</a>
+    <a href="{{ url_for('placement.jobs') }}" class="btn btn-primary btn-sm">+ Post Job Drive</a>
+  </div>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Placement KPI Metric Row -->
+  <div class="metrics-grid">
+    <!-- Placement Rate -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Placement Rate</span>
+        <div class="metric-icon icon-green">🎯</div>
+      </div>
+      <div class="metric-value">{{ placement_rate }}%</div>
+      <div class="metric-footer">
+        <span class="status-indicator status-good"></span>
+        <span class="metric-trend">{{ total_offers }} Offers Recorded</span>
+      </div>
+    </div>
+
+    <!-- Eligible Students -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Drive Eligible</span>
+        <div class="metric-icon icon-blue">👥</div>
+      </div>
+      <div class="metric-value">{{ eligible_students_count }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Readiness >= 60%</span>
+      </div>
+    </div>
+
+    <!-- Active Recruiting Companies -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Corporate Partners</span>
+        <div class="metric-icon icon-purple">🏢</div>
+      </div>
+      <div class="metric-value">{{ companies_count }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Registered Companies</span>
+      </div>
+    </div>
+
+    <!-- Active Drives -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Active Drives</span>
+        <div class="metric-icon icon-blue">💼</div>
+      </div>
+      <div class="metric-value">{{ active_drives_count }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Open Opportunities</span>
+      </div>
+    </div>
+
+    <!-- In-Progress Applications -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">In-Flight Applications</span>
+        <div class="metric-icon icon-amber">📑</div>
+      </div>
+      <div class="metric-value" style="color: #d97706;">{{ applications_in_progress }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Shortlist / Interview Rounds</span>
+      </div>
+    </div>
+
+    <!-- Needs Preparation -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Needs Preparation</span>
+        <div class="metric-icon icon-red">⚡</div>
+      </div>
+      <div class="metric-value" style="color: #dc2626;">{{ needs_prep_count }}</div>
+      <div class="metric-footer">
+        <span class="status-indicator status-danger"></span>
+        <span class="metric-trend">Readiness &lt; 60%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pipeline Funnel & Quick Shortcuts -->
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+    
+    <!-- Recruitment Pipeline Stages -->
+    <div class="card">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="card-title">📊 Campus Recruitment Pipeline Funnel</span>
+        <a href="{{ url_for('placement.applications') }}" class="btn btn-secondary btn-sm">Full Pipeline →</a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 1rem; padding: 0.5rem 0;">
+        {% set max_count = [pipeline['Applied'], 1]|max %}
+        {% for stage_name, stage_count in pipeline.items() %}
+        <div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">
+            <span>{{ stage_name }}</span>
+            <span style="color: #0284c7;">{{ stage_count }} Candidates</span>
+          </div>
+          {% set bar_pct = (stage_count / max_count * 100)|round(1) if max_count > 0 else 0 %}
+          <div class="progress-bar-container" style="height: 10px;">
+            <div class="progress-bar-fill {% if stage_name == 'Offer Accepted' %}fill-green{% elif stage_name == 'Selected' %}fill-blue{% else %}fill-purple{% endif %}" style="width: {{ [bar_pct, 5]|max }}%;"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Placement Shortcuts -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">⚡ Recruitment Operations</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <a href="{{ url_for('placement.companies') }}" class="btn btn-secondary" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>🏢 Company Registry & Criteria</span>
+          <span>→</span>
+        </a>
+        <a href="{{ url_for('placement.jobs') }}" class="btn btn-secondary" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>💼 Post Job Opportunity</span>
+          <span>→</span>
+        </a>
+        <a href="{{ url_for('placement.eligibility') }}" class="btn btn-secondary" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>🎯 Eligibility Verification Engine</span>
+          <span>→</span>
+        </a>
+        <a href="{{ url_for('placement.offers') }}" class="btn btn-secondary" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>🎉 Log Placement Offer</span>
+          <span>→</span>
+        </a>
+        <a href="{{ url_for('placement.editor') }}" class="btn btn-primary" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>⚡ Coding Editor & Compiler</span>
+          <span>→</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Recent Opportunities & Offers Grid -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+    <!-- Recent Job Openings -->
+    <div class="card">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="card-title">💼 Active Job Drives</span>
+        <a href="{{ url_for('placement.jobs') }}" class="btn btn-secondary btn-sm">All Drives</a>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>Company</th>
+              <th>CTC</th>
+              <th>Drive Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for j in recent_jobs %}
+            <tr>
+              <td style="font-weight: 600;">{{ j.title }}</td>
+              <td style="color: #0284c7;">{{ j.company.name if j.company else 'Recruiter' }}</td>
+              <td><strong style="color: #16a34a;">{{ j.ctc_package }}</strong></td>
+              <td style="font-size: 0.8rem; color: #64748b;">{{ j.drive_date or 'TBA' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" style="text-align: center; color: #94a3b8; padding: 2rem;">No active job drives posted.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Placement Offers -->
+    <div class="card">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="card-title">🎉 Confirmed Offers</span>
+        <a href="{{ url_for('placement.offers') }}" class="btn btn-secondary btn-sm">All Offers</a>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Company</th>
+              <th>Role</th>
+              <th>Package</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for o in recent_offers %}
+            <tr>
+              <td>
+                <div style="font-weight: 600;">{{ o.student.full_name if o.student else o.student_id }}</div>
+                <div style="font-size: 0.72rem; color: #64748b; font-family: monospace;">{{ o.student_id }}</div>
+              </td>
+              <td style="color: #0284c7; font-weight: 600;">{{ o.company_name }}</td>
+              <td>{{ o.job_title }}</td>
+              <td><strong style="color: #16a34a;">{{ o.ctc_package }}</strong></td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" style="text-align: center; color: #94a3b8; padding: 2rem;">No offers recorded yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

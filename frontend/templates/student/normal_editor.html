@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Normal Editor - Personal Workspace{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coding_lab.css') }}">
+<!-- Monaco Editor CDN -->
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+
+<div class="ide-wrapper" style="height: calc(100vh - 100px); min-height: 650px;">
+  
+  <!-- 1. Top Editor Toolbar -->
+  <div class="ide-topbar">
+    <!-- Left: File Info & Breadcrumb -->
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <a href="{{ url_for('student_workspace.saved_files_view') }}" class="btn btn-secondary btn-sm" style="background: #1f2937; border-color: #374151; font-size: 0.78rem; padding: 0.3rem 0.6rem;">
+        📁 My Files
+      </a>
+      
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 1.1rem;">📄</span>
+        <span id="activeFileNameDisplay" style="font-weight: 700; color: #f0f6fc; font-size: 0.95rem;">
+          {{ active_file.filename if active_file else 'untitled.py' }}
+        </span>
+        <span id="activeLangBadge" class="badge" style="background: #3b82f6; color: #fff; font-size: 0.7rem; text-transform: uppercase;">
+          {{ detected_language }}
+        </span>
+      </div>
+
+      <span id="normalSaveStatus" style="font-size: 0.78rem; margin-left: 0.5rem; min-width: 100px;">
+        <span style="color: #22c55e;">● Saved</span>
+      </span>
+    </div>
+
+    <!-- Center: Toolbar Actions -->
+    <div style="display: flex; align-items: center; gap: 0.4rem;">
+      <button type="button" id="btnToolbarUndo" class="btn-ide-reset" title="Undo (Ctrl+Z)">↩ Undo</button>
+      <button type="button" id="btnToolbarRedo" class="btn-ide-reset" title="Redo (Ctrl+Y)">↪ Redo</button>
+      <button type="button" id="btnToolbarFind" class="btn-ide-reset" title="Find (Ctrl+F)">🔍 Find</button>
+      
+      <!-- Theme Selector -->
+      <select id="normalThemeSelect" style="background: #161b22; color: #f0f6fc; border: 1px solid #30363d; border-radius: 4px; padding: 0.3rem 0.5rem; font-size: 0.8rem;">
+        <option value="vs-dark">Dark Theme</option>
+        <option value="vs">Light Theme</option>
+      </select>
+
+      <!-- Font Controls -->
+      <div style="display: flex; align-items: center; gap: 0.2rem; background: #161b22; border: 1px solid #30363d; border-radius: 4px; padding: 0.1rem 0.3rem;">
+        <button type="button" id="btnNormalFontDec" class="btn-ide-reset" title="Decrease Font Size" style="padding: 0.15rem 0.4rem;">A-</button>
+        <button type="button" id="btnNormalFontInc" class="btn-ide-reset" title="Increase Font Size" style="padding: 0.15rem 0.4rem;">A+</button>
+      </div>
+    </div>
+
+    <!-- Right: Save & Download Actions -->
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <button type="button" id="btnDownloadCurrent" class="btn-ide-reset" title="Download File">
+        ⬇ Download
+      </button>
+
+      <button type="button" id="btnManualSave" class="btn-ide-submit" style="background: #2563eb; box-shadow: 0 2px 8px rgba(37,99,235,0.4);" title="Save File (Ctrl+S)">
+        💾 Save File
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. Workspace Split (Left File Explorer + Right Editor) -->
+  <div class="ide-split-layout" style="grid-template-columns: 280px 1fr;">
+    
+    <!-- LEFT SIDEBAR: File Explorer & Version History -->
+    <div class="ide-left-panel" style="background: #0d1117;">
+      
+      <!-- File Explorer Header -->
+      <div style="padding: 0.6rem 0.75rem; background: #161b22; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.82rem; font-weight: 700; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em;">
+          Workspace Explorer
+        </span>
+        <div style="display: flex; gap: 0.35rem;">
+          <button type="button" id="btnNewFileModal" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; padding: 0.2rem 0.5rem;" title="Create New File">
+            + New
+          </button>
+          <label for="uploadFileInput" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; cursor: pointer; margin: 0;" title="Upload File">
+            ↑ Upload
+          </label>
+          <input type="file" id="uploadFileInput" style="display: none;">
+        </div>
+      </div>
+
+      <!-- Quick Search Filter -->
+      <div style="padding: 0.5rem 0.75rem; border-bottom: 1px solid #21262d;">
+        <input 
+          type="text" 
+          id="fileSearchInput" 
+          placeholder="Filter files..." 
+          style="width: 100%; background: #161b22; border: 1px solid #30363d; border-radius: 4px; padding: 0.3rem 0.5rem; color: #c9d1d9; font-size: 0.8rem;"
+        >
+      </div>
+
+      <!-- File List -->
+      <div id="fileListContainer" style="flex: 1; overflow-y: auto; padding: 0.25rem 0;">
+        {% if files %}
+          {% for f in files %}
+          <div 
+            class="file-tree-item {% if active_file and f.id == active_file.id %}active{% endif %}"
+            data-file-id="{{ f.id }}"
+            data-filename="{{ f.filename }}"
+            style="padding: 0.45rem 0.75rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-left: 3px solid transparent; transition: background-color 0.15s; font-size: 0.85rem; color: #c9d1d9;"
+            onclick="openStudentFile({{ f.id }})"
+          >
+            <div style="display: flex; align-items: center; gap: 0.45rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              <span>
+                {% if f.filename.endswith('.py') %}🐍
+                {% elif f.filename.endswith('.js') %}📜
+                {% elif f.filename.endswith('.html') %}🌐
+                {% elif f.filename.endswith('.css') %}🎨
+                {% elif f.filename.endswith('.java') %}☕
+                {% elif f.filename.endswith('.cpp') or f.filename.endswith('.c') %}⚙️
+                {% elif f.filename.endswith('.json') or f.filename.endswith('.sql') %}🗄️
+                {% else %}📄{% endif %}
+              </span>
+              <span style="font-weight: 500;">{{ f.filename }}</span>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 0.2rem;" onclick="event.stopPropagation();">
+              <button type="button" class="btn-ide-reset" title="Rename" style="padding: 0.1rem 0.3rem; font-size: 0.7rem;" onclick="renameCurrentFile({{ f.id }}, '{{ f.filename }}')">✏️</button>
+              <button type="button" class="btn-ide-reset" title="Duplicate" style="padding: 0.1rem 0.3rem; font-size: 0.7rem;" onclick="duplicateCurrentFile({{ f.id }})">📋</button>
+              <button type="button" class="btn-ide-reset" title="Delete" style="padding: 0.1rem 0.3rem; font-size: 0.7rem; color: #f87171;" onclick="deleteCurrentFile({{ f.id }}, '{{ f.filename }}')">🗑️</button>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="padding: 1rem; color: #8b949e; font-size: 0.8rem; text-align: center;">
+            No files in workspace. Click "+ New" above to create one.
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Version History Section -->
+      <div style="border-top: 1px solid #30363d; background: #161b22;">
+        <div style="padding: 0.45rem 0.75rem; font-size: 0.78rem; font-weight: 700; color: #8b949e; text-transform: uppercase;">
+          Version History
+        </div>
+        <div id="versionsListContainer" style="max-height: 180px; overflow-y: auto; background: #0d1117;">
+          {% if versions %}
+            {% for v in versions %}
+            <div style="padding: 0.4rem 0.75rem; border-bottom: 1px solid #21262d; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+              <div>
+                <div style="font-weight: 600; color: #f0f6fc;">v{{ v.version_number }} <span style="color: #8b949e; font-size: 0.72rem;">({{ v.size_bytes }} B)</span></div>
+                <div style="color: #8b949e; font-size: 0.72rem;">{{ v.change_summary }} &bull; {{ v.created_at.strftime('%H:%M:%S') }}</div>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;" onclick="restoreVersion({{ v.id }}, {{ v.version_number }})">
+                Restore
+              </button>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div style="padding: 0.75rem; color: #8b949e; font-size: 0.78rem;">
+              No version history snapshots recorded yet.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Monaco Code Editor Area -->
+    <div class="ide-main-panel">
+      <div 
+        id="normalEditorContainer" 
+        class="monaco-host-container"
+        data-active-file-id="{{ active_file.id if active_file else '' }}"
+        data-active-file-name="{{ active_file.filename if active_file else 'main.py' }}"
+        data-initial-content="{{ active_file.content|e if active_file else '' }}"
+        style="height: 100%;"
+      >
+        <!-- Textarea fallback -->
+        <textarea 
+          id="normalFallbackTextarea" 
+          style="display: none; width: 100%; height: 100%; background: #1e1e1e; color: #d4d4d4; font-family: monospace; font-size: 14px; border: none; padding: 12px; outline: none; resize: none;"
+        >{{ active_file.content if active_file else '' }}</textarea>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Normal Editor Script -->
+<script src="{{ url_for('static', filename='js/normal_editor.js') }}"></script>
+<style>
+.file-tree-item:hover {
+  background: #161b22;
+}
+.file-tree-item.active {
+  background: #1f2937;
+  border-left-color: #3b82f6 !important;
+  color: #58a6ff !important;
+}
+</style>
+{% endblock %}

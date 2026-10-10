@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}My Saved Files - Personal Workspace{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coding_lab.css') }}">
+
+<div class="student-dashboard-wrapper">
+  
+  <!-- 1. Header & Navigation -->
+  <div class="coding-lab-header">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+        <span class="badge" style="background: #2563eb; color: #fff; font-size: 0.72rem;">STUDENT WORKSPACE</span>
+        <span style="font-size: 0.8rem; color: #94a3b8;">Cloud File Storage & Version Archive</span>
+      </div>
+      <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin: 0;">
+        My Saved Files 📁
+      </h2>
+      <p style="color: #94a3b8; font-size: 0.88rem; margin: 0.25rem 0 0 0;">
+        Manage your source code files, version snapshots, scripts, and personal notes.
+      </p>
+    </div>
+
+    <!-- Actions -->
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <a href="{{ url_for('coding_lab.dashboard') }}" class="btn btn-primary" style="background: #2563eb; border: none; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+        🧩 Open Coding Lab
+      </a>
+    </div>
+  </div>
+
+  <!-- 2. Metrics Overview Grid -->
+  <div class="metrics-grid" style="margin-bottom: 1.5rem;">
+    <!-- Total Files -->
+    <div class="coding-stat-card">
+      <div class="coding-stat-icon blue">📄</div>
+      <div>
+        <div style="font-size: 0.8rem; color: #8b949e; text-transform: uppercase; font-weight: 600;">Saved Files</div>
+        <div style="font-size: 1.6rem; font-weight: 700; color: #f0f6fc;">{{ total_count }}</div>
+        <div style="font-size: 0.75rem; color: #38bdf8;">Persisted in your cloud workspace</div>
+      </div>
+    </div>
+
+    <!-- Storage Used -->
+    <div class="coding-stat-card">
+      <div class="coding-stat-icon green">💾</div>
+      <div>
+        <div style="font-size: 0.8rem; color: #8b949e; text-transform: uppercase; font-weight: 600;">Storage Used</div>
+        <div style="font-size: 1.6rem; font-weight: 700; color: #f0f6fc;">
+          {% if total_storage_bytes < 1024 %}
+            {{ total_storage_bytes }} B
+          {% else %}
+            {{ (total_storage_bytes / 1024)|round(1) }} KB
+          {% endif %}
+        </div>
+        <div style="font-size: 0.75rem; color: #22c55e;">512 KB per file maximum</div>
+      </div>
+    </div>
+
+    <!-- Languages Used -->
+    <div class="coding-stat-card">
+      <div class="coding-stat-icon purple">🎨</div>
+      <div>
+        <div style="font-size: 0.8rem; color: #8b949e; text-transform: uppercase; font-weight: 600;">File Types</div>
+        <div style="font-size: 1.6rem; font-weight: 700; color: #f0f6fc;">{{ types_list|length }}</div>
+        <div style="font-size: 0.75rem; color: #c084fc;">Multi-language support</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Search and Filters Bar -->
+  <form method="GET" action="{{ url_for('student_workspace.saved_files_view') }}" class="practice-filter-bar">
+    <!-- Search Input -->
+    <div style="flex: 1; min-width: 240px;">
+      <input 
+        type="text" 
+        name="search" 
+        value="{{ current_search }}" 
+        placeholder="🔍 Search files by name..." 
+        style="width: 100%; padding: 0.55rem 0.85rem; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; font-size: 0.88rem;"
+      >
+    </div>
+
+    <!-- File Type Filter -->
+    <div>
+      <select name="type" style="padding: 0.55rem 0.85rem; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; font-size: 0.88rem;">
+        <option value="">All File Types</option>
+        {% for t in types_list %}
+        <option value="{{ t }}" {% if current_type == t %}selected{% endif %}>{{ t|upper }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Sort By -->
+    <div>
+      <select name="sort" style="padding: 0.55rem 0.85rem; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; font-size: 0.88rem;">
+        <option value="updated" {% if current_sort == 'updated' %}selected{% endif %}>Recently Modified</option>
+        <option value="created" {% if current_sort == 'created' %}selected{% endif %}>Recently Created</option>
+        <option value="name" {% if current_sort == 'name' %}selected{% endif %}>Filename (A-Z)</option>
+        <option value="size" {% if current_sort == 'size' %}selected{% endif %}>File Size (Largest)</option>
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-sm" style="background: #2563eb; border: none; padding: 0.55rem 1rem;">
+      Filter Files
+    </button>
+    {% if current_search or current_type %}
+    <a href="{{ url_for('student_workspace.saved_files_view') }}" class="btn btn-secondary btn-sm" style="padding: 0.55rem 0.75rem;">
+      Clear
+    </a>
+    {% endif %}
+  </form>
+
+  <!-- 4. Files Table Card -->
+  <div class="card" style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1.25rem;">
+    {% if files %}
+    <div class="table-responsive">
+      <table class="table" style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+        <thead>
+          <tr style="border-bottom: 1px solid #30363d; color: #8b949e; text-align: left;">
+            <th style="padding: 0.75rem 1rem;">Filename</th>
+            <th style="padding: 0.75rem 1rem;">Type</th>
+            <th style="padding: 0.75rem 1rem;">Size</th>
+            <th style="padding: 0.75rem 1rem;">Versions</th>
+            <th style="padding: 0.75rem 1rem;">Last Modified</th>
+            <th style="padding: 0.75rem 1rem; text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in files %}
+          <tr style="border-bottom: 1px solid #21262d; color: #c9d1d9;">
+            <td style="padding: 0.75rem 1rem; font-weight: 600;">
+              <a href="{{ url_for('student_workspace.normal_editor', file_id=f.id) }}" style="color: #58a6ff; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+                <span>
+                  {% if f.filename.endswith('.py') %}🐍
+                  {% elif f.filename.endswith('.js') %}📜
+                  {% elif f.filename.endswith('.html') %}🌐
+                  {% elif f.filename.endswith('.css') %}🎨
+                  {% elif f.filename.endswith('.java') %}☕
+                  {% elif f.filename.endswith('.cpp') or f.filename.endswith('.c') %}⚙️
+                  {% else %}📄{% endif %}
+                </span>
+                {{ f.filename }}
+              </a>
+            </td>
+            <td style="padding: 0.75rem 1rem;">
+              <span class="badge" style="background: #21262d; color: #58a6ff; border: 1px solid #30363d; font-size: 0.72rem; text-transform: uppercase;">
+                {{ f.file_type }}
+              </span>
+            </td>
+            <td style="padding: 0.75rem 1rem;">
+              {% if f.size_bytes < 1024 %}
+                {{ f.size_bytes }} B
+              {% else %}
+                {{ (f.size_bytes / 1024)|round(1) }} KB
+              {% endif %}
+            </td>
+            <td style="padding: 0.75rem 1rem;">
+              <span class="badge" style="background: rgba(59,130,246,0.15); color: #38bdf8; font-size: 0.75rem;">
+                {{ f.versions|length }} snapshots
+              </span>
+            </td>
+            <td style="padding: 0.75rem 1rem; color: #8b949e;">
+              {{ f.updated_at.strftime('%Y-%m-%d %H:%M') if f.updated_at else 'Recent' }}
+            </td>
+            <td style="padding: 0.75rem 1rem; text-align: right;">
+              <div style="display: inline-flex; gap: 0.35rem;">
+                <a href="{{ url_for('student_workspace.normal_editor', file_id=f.id) }}" class="btn btn-primary btn-sm" style="background: #2563eb; border: none; font-size: 0.75rem; padding: 0.25rem 0.55rem;" title="Edit in Normal Editor">
+                  Open
+                </a>
+                <a href="/api/student/files/{{ f.id }}/download" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.55rem;" title="Download to Computer">
+                  ⬇
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 3rem; color: #8b949e;">
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📁</div>
+      <p style="margin: 0 0 1rem 0; font-size: 1rem;">No saved files found in your personal workspace.</p>
+      <a href="{{ url_for('coding_lab.dashboard') }}" class="btn btn-primary btn-sm" style="background: #2563eb; border: none;">
+        Solve Problems in Coding Lab &rarr;
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

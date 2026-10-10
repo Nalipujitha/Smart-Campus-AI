@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Student Segmentation - Smart Campus Analytics{% endblock %}
+
+{% block content %}
+<div class="content-wrapper" style="padding: 1.5rem;">
+  
+  <!-- Page Header -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h2 style="font-size: 1.6rem; font-weight: 700; color: #0f172a; margin: 0 0 0.25rem 0;">
+        📊 Institutional Student Segmentation
+      </h2>
+      <p style="color: #64748b; font-size: 0.88rem; margin: 0;">
+        Data-driven cohort intelligence categorizing students based on academic performance, attendance, digital learning, and placement readiness.
+      </p>
+    </div>
+
+    <!-- Filter Form -->
+    <form method="GET" action="{{ url_for('analytics.segmentation_view') }}" style="display: flex; gap: 0.5rem; align-items: center;">
+      <select name="department" class="form-control" onchange="this.form.submit()" style="padding: 0.45rem 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+        <option value="">All Departments</option>
+        {% for d in departments %}
+          <option value="{{ d }}" {% if selected_dept == d %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+      {% if selected_dept %}
+        <a href="{{ url_for('analytics.segmentation_view') }}" class="btn btn-secondary btn-sm">Clear Filter</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Segment Summary Metric Cards (5 Core Cohorts) -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+    {% for seg in segments %}
+      <a href="{{ url_for('analytics.segmentation_view', department=selected_dept, segment_id=seg.segment_id) }}" 
+         style="text-decoration: none; display: block;" 
+         class="segment-kpi-card">
+        <div class="card" style="margin-bottom: 0; height: 100%; border-top: 4px solid {{ seg.badge_color }}; transition: transform 0.15s, box-shadow 0.15s; cursor: pointer; {% if selected_segment_id == seg.segment_id %}box-shadow: 0 0 0 2px {{ seg.badge_color }};{% endif %}">
+          <div class="card-body" style="padding: 1rem;">
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 0.25rem;">
+              {{ seg.short_name }}
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.4rem;">
+              <span style="font-size: 1.8rem; font-weight: 800; color: #0f172a;">{{ seg.student_count }}</span>
+              <span class="badge" style="background: {{ seg.badge_color }}20; color: {{ seg.badge_color }}; font-weight: 700; font-size: 0.78rem;">
+                {{ seg.percentage }}%
+              </span>
+            </div>
+            <p style="font-size: 0.74rem; color: #64748b; margin: 0; line-height: 1.35;">
+              {{ seg.description }}
+            </p>
+          </div>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- Detailed Segment Rosters -->
+  {% for seg in segments %}
+    {% if not selected_segment_id or selected_segment_id == seg.segment_id %}
+      <div class="card" id="segment-{{ seg.segment_id }}" style="margin-bottom: 1.5rem; border-left: 4px solid {{ seg.badge_color }};">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+          <div>
+            <span class="card-title" style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: {{ seg.badge_color }};"></span>
+              {{ seg.name }}
+            </span>
+            <div style="font-size: 0.76rem; color: #64748b; margin-top: 0.15rem;">
+              <strong>Rule Criteria:</strong> {{ seg.criteria_summary }}
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="badge" style="background: {{ seg.badge_color }}; color: #fff; font-size: 0.8rem; padding: 0.35rem 0.65rem;">
+              {{ seg.student_count }} Students ({{ seg.percentage }}%)
+            </span>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Recommended Institutional Action Box -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.78rem; color: #334155; margin-bottom: 1rem;">
+            🎯 <strong>Recommended Faculty & Department Focus:</strong> {{ seg.recommended_focus }}
+          </div>
+
+          <!-- Student Roster Table -->
+          {% if seg.students %}
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Student ID & Name</th>
+                    <th>Department</th>
+                    <th>Year & Sem</th>
+                    <th>Success Score</th>
+                    <th>Academic Score</th>
+                    <th>Attendance</th>
+                    <th>Placement</th>
+                    <th>Risk Level</th>
+                    <th>Segment Reason</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for s in seg.students %}
+                    <tr>
+                      <td>
+                        <strong style="color: #0f172a; font-size: 0.82rem;">{{ s.student_name }}</strong>
+                        <div style="font-size: 0.72rem; color: #64748b;">{{ s.student_id }}</div>
+                      </td>
+                      <td><span style="font-size: 0.78rem; color: #334155;">{{ s.department }}</span></td>
+                      <td><span style="font-size: 0.78rem; color: #64748b;">Y{{ s.academic_year }} / S{{ s.semester }}</span></td>
+                      <td>
+                        <span style="font-weight: 700; color: #0d9488; font-size: 0.85rem;">{{ s.success_score }}</span>
+                      </td>
+                      <td><span style="font-size: 0.8rem; font-weight: 600;">{{ s.academic_score }}%</span></td>
+                      <td>
+                        <span style="font-size: 0.8rem; font-weight: 700; color: {{ '#10b981' if s.attendance_score >= 75 else '#ef4444' }};">
+                          {{ s.attendance_score }}%
+                        </span>
+                      </td>
+                      <td><span style="font-size: 0.8rem; font-weight: 600;">{{ s.placement_score }}%</span></td>
+                      <td>
+                        <span class="badge {{ 'badge-danger' if s.risk_level == 'High' else ('badge-warning' if s.risk_level == 'Medium' else 'badge-success') }}">
+                          {{ s.risk_level }}
+                        </span>
+                      </td>
+                      <td style="max-width: 260px;">
+                        <div style="font-size: 0.74rem; color: #475569; line-height: 1.3;">
+                          {{ s.membership_reason }}
+                        </div>
+                      </td>
+                      <td>
+                        <div style="display: flex; gap: 0.35rem;">
+                          <a href="{{ url_for('students.view_student', student_id=s.student_id) }}" class="btn btn-secondary btn-sm" title="View Profile">
+                            👤
+                          </a>
+                          <a href="{{ url_for('interventions.create_intervention') }}?student_id={{ s.student_id }}" class="btn btn-primary btn-sm" title="Log Intervention">
+                            📝
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div style="text-align: center; padding: 2rem; color: #94a3b8;">
+              <p style="font-size: 0.85rem;">No students currently meet the criteria for this segment.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  {% endfor %}
+
+</div>
+{% endblock %}

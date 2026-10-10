@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}Institutional Attendance Oversight - Admin Portal{% endblock %}
+{% block header_title %}Institutional Attendance Oversight{% endblock %}
+
+{% block header_actions %}
+  <a href="{{ url_for('admin.export_csv', report_type='attendance') }}" class="btn btn-secondary btn-sm">
+    📥 Export Attendance CSV
+  </a>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Critical Attendance Warnings Row -->
+  <div class="card" style="border-left: 4px solid #ef4444;">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <span class="card-title" style="color: #dc2626;">⚠️ Students Below 75% Attendance Threshold</span>
+      <span class="badge badge-danger">{{ low_att_students|length }} Critical Shortages</span>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student ID</th>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Total Sessions</th>
+            <th>Present</th>
+            <th>Absent</th>
+            <th>Attendance %</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in low_att_students %}
+          {% set s = item.student %}
+          {% set att = item.att %}
+          <tr>
+            <td style="font-family: monospace; font-weight: 700;">{{ s.student_id }}</td>
+            <td><strong>{{ s.full_name }}</strong></td>
+            <td>{{ s.department }}</td>
+            <td>{{ att.total_sessions }}</td>
+            <td style="color: #16a34a; font-weight: 600;">{{ att.present }}</td>
+            <td style="color: #dc2626; font-weight: 600;">{{ att.absent }}</td>
+            <td>
+              <span class="badge badge-danger" style="font-size: 0.85rem;">{{ att.percentage }}%</span>
+            </td>
+            <td>
+              <a href="{{ url_for('students.view_student', student_id=s.student_id) }}" class="btn btn-secondary btn-sm">Profile</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" style="text-align: center; color: #16a34a; padding: 2rem;">All enrolled students currently meet the 75% attendance benchmark.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Class Attendance Sessions -->
+  <div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <span class="card-title">📅 Recent Recorded Attendance Sessions</span>
+      <form method="GET" action="{{ url_for('admin.attendance') }}" style="display: flex; gap: 0.5rem;">
+        <select name="department" onchange="this.form.submit()" class="form-control" style="padding: 0.35rem 0.6rem; font-size: 0.85rem;">
+          <option value="">All Departments</option>
+          {% for d in departments %}
+            <option value="{{ d }}" {% if selected_dept == d %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Class Code</th>
+            <th>Subject</th>
+            <th>Department</th>
+            <th>Faculty Advisor</th>
+            <th>Present / Total</th>
+            <th>Turnout</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in recent_sessions %}
+          {% set p_cnt = s.records.filter_by(status='Present').count() %}
+          {% set tot = s.records.count() %}
+          {% set pct = (p_cnt / tot * 100)|round(1) if tot > 0 else 0 %}
+          <tr>
+            <td style="font-size: 0.85rem; color: #64748b;">{{ s.session_date }}</td>
+            <td style="font-weight: 600;">{{ s.class_code }}</td>
+            <td>{{ s.subject }}</td>
+            <td>{{ s.department }}</td>
+            <td>{{ s.faculty.full_name if s.faculty else 'Department Faculty' }}</td>
+            <td><strong>{{ p_cnt }}</strong> / {{ tot }}</td>
+            <td>
+              <span class="badge {% if pct >= 75 %}badge-success{% else %}badge-warning{% endif %}">
+                {{ pct }}%
+              </span>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" style="text-align: center; color: #94a3b8; padding: 2rem;">No attendance sessions found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

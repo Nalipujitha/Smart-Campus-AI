@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Candidate Shortlisting - Placement Portal{% endblock %}
+{% block header_title %}Candidate Shortlisting & Matching{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Job Selector -->
+  <div class="card" style="padding: 1.25rem;">
+    <form method="GET" action="{{ url_for('placement.candidates') }}" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+      <div style="flex: 2; min-width: 250px;">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 0.3rem;">Select Job Drive</label>
+        <select name="job_id" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+          {% for j in jobs %}
+            <option value="{{ j.id }}" {% if selected_job and selected_job.id == j.id %}selected{% endif %}>
+              {{ j.title }} — {{ j.company.name if j.company else '' }} ({{ j.ctc_package }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Load Candidates</button>
+    </form>
+  </div>
+
+  {% if selected_job %}
+  <!-- Job Criteria Summary -->
+  <div class="card" style="border-left: 4px solid #0284c7;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0 0 0.25rem 0;">{{ selected_job.title }} at {{ selected_job.company.name if selected_job.company else '' }}</h3>
+        <div style="font-size: 0.82rem; color: #64748b;">Package: <strong style="color: #16a34a;">{{ selected_job.ctc_package }}</strong> | Cutoff: <strong>{{ selected_job.min_cgpa }} CGPA</strong> & <strong>{{ selected_job.min_readiness }}% Readiness</strong></div>
+      </div>
+      <span class="badge badge-primary">{{ candidates|length }} Eligible Senior Students</span>
+    </div>
+  </div>
+
+  <!-- Candidates Table -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Matching Senior Candidates</span>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Department</th>
+            <th>Target Role</th>
+            <th>Readiness Score</th>
+            <th>Coding</th>
+            <th>Aptitude</th>
+            <th>Application Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in candidates %}
+          {% set s = c.student %}
+          {% set p = c.profile %}
+          <tr>
+            <td>
+              <div style="font-weight: 600;">{{ s.full_name }}</div>
+              <div style="font-size: 0.72rem; color: #64748b; font-family: monospace;">{{ s.student_id }}</div>
+            </td>
+            <td>{{ s.department }} (Sem {{ s.semester }})</td>
+            <td style="color: #0284c7; font-weight: 600;">{{ p.target_role if p else 'Developer' }}</td>
+            <td><strong>{{ c.readiness }}%</strong></td>
+            <td>{{ p.coding_score if p else 0 }}%</td>
+            <td>{{ p.aptitude_score if p else 0 }}%</td>
+            <td>
+              {% if c.application %}
+                <span class="badge badge-info">{{ c.application.stage }}</span>
+              {% else %}
+                <span class="badge badge-secondary">Eligible to Apply</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

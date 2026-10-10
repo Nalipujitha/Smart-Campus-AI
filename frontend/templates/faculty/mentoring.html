@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Mentoring & Interventions - Faculty Portal{% endblock %}
+{% block header_title %}Student Mentoring & Intervention Log{% endblock %}
+
+{% block header_actions %}
+  <button onclick="document.getElementById('interventionModal').style.display='block'" class="btn btn-primary btn-sm">
+    + Log New Mentoring Session
+  </button>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Active Mentoring Records -->
+  <div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <span class="card-title">My Mentoring & Remedial Cases</span>
+      <span class="badge badge-primary">{{ interventions|length }} Cases</span>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Student</th>
+            <th>Title & Category</th>
+            <th>Priority</th>
+            <th>Action Items</th>
+            <th>Follow-up</th>
+            <th>Status</th>
+            <th>Update</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inter in interventions %}
+          <tr>
+            <td style="font-size: 0.8rem; color: #64748b;">{{ inter.session_date }}</td>
+            <td>
+              <div style="font-weight: 600;">{{ inter.student.full_name if inter.student else inter.student_id }}</div>
+              <div style="font-size: 0.75rem; color: #64748b; font-family: monospace;">{{ inter.student_id }}</div>
+            </td>
+            <td>
+              <div style="font-weight: 600;">{{ inter.title }}</div>
+              <span class="badge badge-info" style="font-size: 0.7rem;">{{ inter.category }}</span>
+            </td>
+            <td>
+              {% if inter.priority == 'High' %}
+                <span class="badge badge-danger">High</span>
+              {% elif inter.priority == 'Medium' %}
+                <span class="badge badge-warning">Medium</span>
+              {% else %}
+                <span class="badge badge-success">Low</span>
+              {% endif %}
+            </td>
+            <td style="font-size: 0.8rem; color: #334155; max-width: 250px;">
+              {{ inter.action_items or 'General counseling' }}
+            </td>
+            <td style="font-size: 0.8rem; color: #475569;">
+              {{ inter.follow_up_date or 'N/A' }}
+            </td>
+            <td>
+              <span class="badge {% if inter.status == 'Open' %}badge-danger{% elif inter.status == 'In Progress' %}badge-warning{% else %}badge-success{% endif %}">
+                {{ inter.status }}
+              </span>
+            </td>
+            <td>
+              <form method="POST" action="{{ url_for('faculty.update_intervention_status', intervention_id=inter.id) }}" style="display: flex; gap: 0.3rem;">
+                <select name="status" class="form-control" style="padding: 0.2rem 0.4rem; font-size: 0.78rem;">
+                  <option value="Open" {% if inter.status == 'Open' %}selected{% endif %}>Open</option>
+                  <option value="In Progress" {% if inter.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                  <option value="Completed" {% if inter.status == 'Completed' %}selected{% endif %}>Completed</option>
+                </select>
+                <button type="submit" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">Save</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" style="text-align: center; color: #94a3b8; padding: 2rem;">No mentoring records logged yet. Click "+ Log New Mentoring Session" to record counseling notes.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Log Mentoring Modal Dialog -->
+<div id="interventionModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 999; overflow-y: auto;">
+  <div style="background: white; border-radius: 12px; max-width: 550px; margin: 4rem auto; padding: 1.75rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">Log Mentoring / Counseling Session</h3>
+      <button onclick="document.getElementById('interventionModal').style.display='none'" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #64748b;">✕</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('faculty.mentoring') }}" style="display: flex; flex-direction: column; gap: 1rem;">
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Select Student *</label>
+        <select name="student_id" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+          {% for s in auth_students %}
+            <option value="{{ s.student_id }}">{{ s.student_id }} — {{ s.full_name }} (Sem {{ s.semester }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Session Title / Concern *</label>
+        <input type="text" name="title" placeholder="e.g. Attendance Shortage & Assignment Remediation" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Category</label>
+          <select name="category" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+            <option value="Academic">Academic</option>
+            <option value="Attendance">Attendance</option>
+            <option value="Placement">Placement / Career</option>
+            <option value="Personal">Personal / Wellness</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Priority</label>
+          <select name="priority" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+            <option value="High">High</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Session Notes & Discussions *</label>
+        <textarea name="notes" rows="3" placeholder="Discussed reasons for recent absences and provided study guide..." required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;"></textarea>
+      </div>
+
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Action Items / Tasks Assigned</label>
+        <input type="text" name="action_items" placeholder="1. Submit pending assignment. 2. Attend tutorial." class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+      </div>
+
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Follow-up Date</label>
+        <input type="date" name="follow_up_date" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+        <button type="button" onclick="document.getElementById('interventionModal').style.display='none'" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Mentoring Log</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

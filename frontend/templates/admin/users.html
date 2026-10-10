@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}User Roles & Permissions - Admin Portal{% endblock %}
+{% block header_title %}User Roles & System Permissions{% endblock %}
+
+{% block header_actions %}
+  <button onclick="document.getElementById('addUserModal').style.display='block'" class="btn btn-primary btn-sm">
+    + Create User Account
+  </button>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- User Accounts Table -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">System Users & Role Privileges</span>
+      <span class="badge badge-primary">{{ users|length }} User Accounts</span>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Full Name</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Department</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td style="font-family: monospace;">#{{ u.id }}</td>
+            <td style="font-weight: 600;">{{ u.full_name }}</td>
+            <td style="font-family: monospace; color: #0284c7;">{{ u.username }}</td>
+            <td>{{ u.email }}</td>
+            <td>
+              {% if u.role == 'Admin' %}
+                <span class="badge badge-danger">Admin</span>
+              {% elif u.role == 'Faculty' %}
+                <span class="badge badge-info">Faculty</span>
+              {% elif u.role in ['Placement_Officer', 'Placement'] %}
+                <span class="badge badge-warning">Placement</span>
+              {% else %}
+                <span class="badge badge-success">Student</span>
+              {% endif %}
+            </td>
+            <td>{{ u.department or 'Institution-wide' }}</td>
+            <td>
+              {% if u.is_active %}
+                <span class="badge badge-success">Active</span>
+              {% else %}
+                <span class="badge badge-danger">Disabled</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Create User Modal Dialog -->
+<div id="addUserModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 999; overflow-y: auto;">
+  <div style="background: white; border-radius: 12px; max-width: 500px; margin: 4rem auto; padding: 1.75rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">Create User Account</h3>
+      <button onclick="document.getElementById('addUserModal').style.display='none'" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #64748b;">✕</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.users') }}" style="display: flex; flex-direction: column; gap: 1rem;">
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Full Name *</label>
+        <input type="text" name="full_name" placeholder="Full Name" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+      </div>
+
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Username *</label>
+        <input type="text" name="username" placeholder="username" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+      </div>
+
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Email Address *</label>
+        <input type="email" name="email" placeholder="user@campus.edu" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+      </div>
+
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">System Role *</label>
+        <select name="role" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+          <option value="Admin">Administrator</option>
+          <option value="Faculty">Faculty / Advisor</option>
+          <option value="Placement_Officer">Placement Officer</option>
+          <option value="Student">Student</option>
+        </select>
+      </div>
+
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Department</label>
+        <select name="department" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+          <option value="">None / Institution-wide</option>
+          {% for d in departments %}
+            <option value="{{ d }}">{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Password</label>
+        <input type="password" name="password" value="Password@123" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+        <button type="button" onclick="document.getElementById('addUserModal').style.display='none'" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Account</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

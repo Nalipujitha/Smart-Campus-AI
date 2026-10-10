@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}At-Risk Students Cohort - Faculty Portal{% endblock %}
+{% block header_title %}At-Risk Students & Early Remediation{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <span class="card-title">🚨 Supervised Cohort Risk Directory</span>
+      <span class="badge badge-danger">{{ risk_list|length }} Flagged Students</span>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Semester</th>
+            <th>Risk Level</th>
+            <th>Risk Score</th>
+            <th>Contributing Factors</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in risk_list %}
+          {% set s = item.student %}
+          <tr>
+            <td>
+              <div style="font-weight: 600;">{{ s.full_name }}</div>
+              <div style="font-size: 0.75rem; color: #64748b; font-family: monospace;">{{ s.student_id }}</div>
+            </td>
+            <td>Sem {{ s.semester }} (Sec {{ s.section }})</td>
+            <td>
+              <span class="badge {% if item.risk_level == 'High' %}badge-danger{% else %}badge-warning{% endif %}">
+                {{ item.risk_level }}
+              </span>
+            </td>
+            <td><strong>{{ item.risk_score }}</strong> / 100</td>
+            <td style="font-size: 0.8rem; color: #475569; max-width: 320px;">
+              {{ item.risk_factors|join('; ') }}
+            </td>
+            <td>
+              <a href="{{ url_for('faculty.mentoring') }}?student_id={{ s.student_id }}" class="btn btn-primary btn-sm">
+                + Create Mentoring Plan
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" style="text-align: center; color: #16a34a; padding: 2rem;">No students in your authorized cohort are currently flagged for academic risk.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Application Pipeline - Placement Portal{% endblock %}
+{% block header_title %}Recruitment Applications Pipeline & Stage Tracking{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Stage Filter Bar -->
+  <div class="card" style="padding: 1.25rem;">
+    <form method="GET" action="{{ url_for('placement.applications') }}" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+      <div style="flex: 1; min-width: 200px;">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 0.3rem;">Filter Stage</label>
+        <select name="stage" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+          <option value="">All Stages</option>
+          <option value="Applied" {% if selected_stage == 'Applied' %}selected{% endif %}>Applied</option>
+          <option value="Shortlisted" {% if selected_stage == 'Shortlisted' %}selected{% endif %}>Shortlisted</option>
+          <option value="Interview" {% if selected_stage == 'Interview' %}selected{% endif %}>Interview</option>
+          <option value="Selected" {% if selected_stage == 'Selected' %}selected{% endif %}>Selected</option>
+          <option value="Offer Accepted" {% if selected_stage == 'Offer Accepted' %}selected{% endif %}>Offer Accepted</option>
+          <option value="Rejected" {% if selected_stage == 'Rejected' %}selected{% endif %}>Rejected</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="{{ url_for('placement.applications') }}" class="btn btn-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Applications Table with Inline Stage Updater -->
+  <div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <span class="card-title">Candidate Recruitment Pipeline</span>
+      <span class="badge badge-info">{{ applications|length }} Applications</span>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Role & Company</th>
+            <th>Stage</th>
+            <th>Round Cleared</th>
+            <th>Feedback / Notes</th>
+            <th>Update Stage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in applications %}
+          <tr>
+            <td>
+              <div style="font-weight: 600;">{{ app.student.full_name if app.student else app.student_id }}</div>
+              <div style="font-size: 0.72rem; color: #64748b; font-family: monospace;">{{ app.student_id }}</div>
+            </td>
+            <td>
+              <div style="font-weight: 600; color: #0284c7;">{{ app.job.title if app.job else 'Position' }}</div>
+              <div style="font-size: 0.75rem; color: #64748b;">{{ app.job.company.name if (app.job and app.job.company) else 'Recruiter' }} ({{ app.job.ctc_package if app.job else '' }})</div>
+            </td>
+            <td>
+              {% if app.stage in ['Selected', 'Offer Accepted'] %}
+                <span class="badge badge-success">{{ app.stage }}</span>
+              {% elif app.stage in ['Shortlisted', 'Interview'] %}
+                <span class="badge badge-info">{{ app.stage }}</span>
+              {% elif app.stage == 'Rejected' %}
+                <span class="badge badge-danger">Rejected</span>
+              {% else %}
+                <span class="badge badge-secondary">Applied</span>
+              {% endif %}
+            </td>
+            <td style="font-size: 0.82rem; color: #475569;">{{ app.round_cleared or 'Initial' }}</td>
+            <td style="font-size: 0.8rem; color: #64748b; max-width: 200px;">{{ app.feedback or '-' }}</td>
+            <td>
+              <form method="POST" action="{{ url_for('placement.update_application_stage', app_id=app.id) }}" style="display: flex; gap: 0.3rem;">
+                <select name="stage" class="form-control" style="padding: 0.25rem 0.4rem; font-size: 0.78rem;">
+                  <option value="Applied" {% if app.stage == 'Applied' %}selected{% endif %}>Applied</option>
+                  <option value="Shortlisted" {% if app.stage == 'Shortlisted' %}selected{% endif %}>Shortlisted</option>
+                  <option value="Interview" {% if app.stage == 'Interview' %}selected{% endif %}>Interview</option>
+                  <option value="Selected" {% if app.stage == 'Selected' %}selected{% endif %}>Selected</option>
+                  <option value="Offer Accepted" {% if app.stage == 'Offer Accepted' %}selected{% endif %}>Offer Accepted</option>
+                  <option value="Rejected" {% if app.stage == 'Rejected' %}selected{% endif %}>Rejected</option>
+                </select>
+                <button type="submit" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Update</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" style="text-align: center; color: #94a3b8; padding: 2rem;">No applications found in this stage.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

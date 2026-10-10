@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Student Roster - Smart Campus Analytics{% endblock %}
+{% block header_title %}Student Management & Academic Records{% endblock %}
+
+{% block header_actions %}
+  {% if current_user.role == 'Admin' %}
+    <button class="btn btn-primary" onclick="document.getElementById('createStudentModal').style.display='block'">
+      + Add New Student
+    </button>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<!-- Filters Bar -->
+<form method="GET" action="{{ url_for('students.list_students') }}" class="filter-bar" id="studentFilterForm">
+  <div class="form-group" style="flex: 1; min-width: 200px;">
+    <label for="studentSearchInput">Search Student</label>
+    <input type="text" name="search" id="studentSearchInput" class="form-control" placeholder="Search by ID, name, or email..." value="{{ search }}">
+  </div>
+
+  <div class="form-group">
+    <label for="studentDeptFilter">Department</label>
+    <select name="department" id="studentDeptFilter" class="form-select">
+      <option value="">All Departments</option>
+      {% for dept in departments %}
+        <option value="{{ dept }}" {% if selected_dept == dept %}selected{% endif %}>{{ dept }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="studentStatusFilter">Academic Status</label>
+    <select name="status" id="studentStatusFilter" class="form-select">
+      <option value="">All Statuses</option>
+      <option value="Active" {% if selected_status == 'Active' %}selected{% endif %}>Active</option>
+      <option value="At Risk" {% if selected_status == 'At Risk' %}selected{% endif %}>At Risk</option>
+      <option value="On Leave" {% if selected_status == 'On Leave' %}selected{% endif %}>On Leave</option>
+    </select>
+  </div>
+
+  <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
+    <button type="submit" class="btn btn-primary">Filter</button>
+    <a href="{{ url_for('students.list_students') }}" class="btn btn-secondary">Reset</a>
+  </div>
+</form>
+
+<!-- Student Table Card -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">📋 Student Roster (Total: {{ pagination.total }})</span>
+  </div>
+  <div class="card-body" style="padding: 0;">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student ID</th>
+            <th>Full Name</th>
+            <th>Department</th>
+            <th>Year / Sem</th>
+            <th>Success Score</th>
+            <th>Risk Level</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if students %}
+            {% for s in students %}
+              {% set score = scores.get(s.student_id) %}
+              <tr>
+                <td><strong>{{ s.student_id }}</strong></td>
+                <td>
+                  <a href="{{ url_for('students.view_student', student_id=s.student_id) }}" style="font-weight: 600;">
+                    {{ s.full_name }}
+                  </a>
+                  <div style="font-size: 0.75rem; color: #64748b;">{{ s.email }}</div>
+                </td>
+                <td>{{ s.department }}</td>
+                <td>Year {{ s.academic_year }} (Sem {{ s.semester }})</td>
+                <td>
+                  <div style="font-weight: 700; color: #0f172a;">
+                    {{ score.success_score if score else 'N/A' }}/100
+                  </div>
+                  <div class="progress-bar-container" style="width: 80px;">
+                    <div class="progress-bar-fill {% if score and score.success_score >= 75 %}fill-green{% elif score and score.success_score >= 50 %}fill-amber{% else %}fill-red{% endif %}"
+                         style="width: {{ score.success_score if score else 0 }}%;"></div>
+                  </div>
+                </td>
+                <td>
+                  {% if score and score.risk_level == 'High' %}
+                    <span class="badge badge-danger">High Risk</span>
+                  {% elif score and score.risk_level == 'Medium' %}
+                    <span class="badge badge-warning">Medium</span>
+                  {% else %}
+                    <span class="badge badge-success">Low Concern</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge {% if s.status == 'Active' %}badge-success{% elif s.status == 'At Risk' %}badge-danger{% else %}badge-neutral{% endif %}">
+                    {{ s.status }}
+                  </span>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 0.4rem;">
+                    <a href="{{ url_for('students.view_student', student_id=s.student_id) }}" class="btn btn-secondary btn-sm">
+                      Profile
+                    </a>
+                    {% if current_user.role == 'Admin' %}
+                      <form method="POST" action="{{ url_for('students.delete_student', student_id=s.student_id) }}" style="display:inline;" onsubmit="return confirmStudentDelete('{{ s.student_id }}', '{{ s.full_name }}');">
+                        <button type="submit" class="btn btn-danger btn-sm" title="Delete Student">✕</button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 2.5rem; color: #64748b;">
+                No student records matching your search or filters.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Pagination Controls -->
+{% if pagination.pages > 1 %}
+<div class="pagination-wrapper">
+  <div>Showing page {{ pagination.page }} of {{ pagination.pages }}</div>
+  <div class="pagination-links">
+    {% if pagination.has_prev %}
+      <a href="{{ url_for('students.list_students', page=pagination.prev_num, search=search, department=selected_dept, status=selected_status) }}" class="page-btn">Previous</a>
+    {% endif %}
+    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% if p %}
+        <a href="{{ url_for('students.list_students', page=p, search=search, department=selected_dept, status=selected_status) }}" class="page-btn {% if p == pagination.page %}active{% endif %}">{{ p }}</a>
+      {% else %}
+        <span class="page-btn" style="border:none;">...</span>
+      {% endif %}
+    {% endfor %}
+    {% if pagination.has_next %}
+      <a href="{{ url_for('students.list_students', page=pagination.next_num, search=search, department=selected_dept, status=selected_status) }}" class="page-btn">Next</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Create Student Modal (Admin only) -->
+{% if current_user.role == 'Admin' %}
+<div id="createStudentModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center;">
+  <div style="background: white; border-radius: 10px; max-width: 500px; width: 90%; margin: 5vh auto; padding: 1.75rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--primary-navy);">Add New Student Record</h3>
+      <button onclick="document.getElementById('createStudentModal').style.display='none'" style="background:none; border:none; font-size: 1.25rem; cursor:pointer;">✕</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('students.create_student') }}">
+      <div class="form-group" style="margin-bottom: 0.85rem;">
+        <label for="new_student_id">Student ID</label>
+        <input type="text" name="student_id" id="new_student_id" class="form-control" placeholder="e.g. STU2024200" required>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
+        <div class="form-group">
+          <label for="new_first_name">First Name</label>
+          <input type="text" name="first_name" id="new_first_name" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label for="new_last_name">Last Name</label>
+          <input type="text" name="last_name" id="new_last_name" class="form-control" required>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0.85rem;">
+        <label for="new_email">Email</label>
+        <input type="email" name="email" id="new_email" class="form-control" required>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0.85rem;">
+        <label for="new_department">Department</label>
+        <select name="department" id="new_department" class="form-select" required>
+          {% for dept in departments %}
+            <option value="{{ dept }}">{{ dept }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label for="new_year">Year</label>
+          <input type="number" name="academic_year" id="new_year" min="1" max="4" value="1" class="form-control">
+        </div>
+        <div class="form-group">
+          <label for="new_semester">Semester</label>
+          <input type="number" name="semester" id="new_semester" min="1" max="8" value="1" class="form-control">
+        </div>
+        <div class="form-group">
+          <label for="new_section">Section</label>
+          <input type="text" name="section" id="new_section" value="A" class="form-control">
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('createStudentModal').style.display='none'">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Student</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/students.js') }}"></script>
+{% endblock %}

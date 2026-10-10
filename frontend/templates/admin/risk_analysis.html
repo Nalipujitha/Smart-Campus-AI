@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Risk Analysis Engine - Admin Portal{% endblock %}
+{% block header_title %}Student Risk Analysis & Early Warning{% endblock %}
+
+{% block header_actions %}
+  <a href="{{ url_for('admin.export_csv', report_type='risk') }}" class="btn btn-secondary btn-sm">
+    📥 Export Risk Report CSV
+  </a>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Risk Distribution Summary -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">High Risk Level</span>
+        <div class="metric-icon icon-red">🚨</div>
+      </div>
+      <div class="metric-value" style="color: #dc2626;">{{ high_count }}</div>
+      <div class="metric-footer">
+        <span class="status-indicator status-danger"></span>
+        <span class="metric-trend">Immediate Intervention Required</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Medium Risk</span>
+        <div class="metric-icon icon-amber">⚠️</div>
+      </div>
+      <div class="metric-value" style="color: #d97706;">{{ med_count }}</div>
+      <div class="metric-footer">
+        <span class="status-indicator status-warning"></span>
+        <span class="metric-trend">Proactive Monitoring</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Low / Normal Risk</span>
+        <div class="metric-icon icon-green">🛡️</div>
+      </div>
+      <div class="metric-value" style="color: #16a34a;">{{ low_count }}</div>
+      <div class="metric-footer">
+        <span class="status-indicator status-good"></span>
+        <span class="metric-trend">Good Standing</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Total Evaluated</span>
+        <div class="metric-icon icon-blue">👥</div>
+      </div>
+      <div class="metric-value">{{ total_evaluated }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Active Student Body</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prioritized At-Risk Students Table -->
+  <div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <span class="card-title">🚨 Student Risk Directory & Factor Breakdown</span>
+      <form method="GET" action="{{ url_for('admin.risk_analysis') }}" style="display: flex; gap: 0.5rem;">
+        <select name="department" onchange="this.form.submit()" class="form-control" style="padding: 0.35rem 0.6rem; font-size: 0.85rem;">
+          <option value="">All Departments</option>
+          {% for d in departments %}
+            <option value="{{ d }}" {% if selected_dept == d %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Department</th>
+            <th>Risk Level</th>
+            <th>Composite Score</th>
+            <th>Trigger Factors</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in risk_evaluations %}
+          {% set s = item.student %}
+          {% set ev = item.evaluation %}
+          <tr>
+            <td>
+              <div style="font-weight: 600;">{{ s.full_name }}</div>
+              <div style="font-size: 0.75rem; color: #64748b; font-family: monospace;">{{ s.student_id }}</div>
+            </td>
+            <td>{{ s.department }} (Sem {{ s.semester }})</td>
+            <td>
+              {% if ev.risk_level == 'High' %}
+                <span class="badge badge-danger">High Risk</span>
+              {% elif ev.risk_level == 'Medium' %}
+                <span class="badge badge-warning">Medium Risk</span>
+              {% else %}
+                <span class="badge badge-success">Low Risk</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <strong>{{ ev.risk_score }}</strong> / 100
+              </div>
+            </td>
+            <td style="font-size: 0.8rem; color: #475569; max-width: 320px;">
+              {% if ev.risk_factors %}
+                {{ ev.risk_factors|join('; ') }}
+              {% else %}
+                <span style="color: #94a3b8;">No risk flags active</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{{ url_for('students.view_student', student_id=s.student_id) }}" class="btn btn-secondary btn-sm">Profile</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" style="text-align: center; color: #94a3b8; padding: 2rem;">No students identified.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

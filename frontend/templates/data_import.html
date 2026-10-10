@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Data Import & Quality - Smart Campus Analytics{% endblock %}
+{% block header_title %}Data Quality Management & Safe CSV Importer{% endblock %}
+
+{% block content %}
+
+<!-- Data Upload Form -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">📤 Upload Institutional CSV Data</span>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="{{ url_for('data_import.upload_data') }}" enctype="multipart/form-data">
+      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.25rem; margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label for="datasetType">Select Dataset Type</label>
+          <select name="dataset_type" id="datasetType" class="form-select" required>
+            <option value="students">Students Master Roster (CSV)</option>
+            <option value="attendance">Class Attendance Logs (CSV)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="csvFileInput">Choose CSV File</label>
+          <input type="file" name="csv_file" id="csvFileInput" class="form-control" accept=".csv" required>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.5rem; font-weight: 600;">
+        Validate & Import Dataset
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Upload Results & Validation Report -->
+{% if completed %}
+<div class="card" style="border-left: 4px solid {% if errors %}var(--warning){% else %}var(--success){% endif %};">
+  <div class="card-header">
+    <span class="card-title">📊 Import Validation Report ({{ dataset_type|capitalize }})</span>
+  </div>
+  <div class="card-body">
+    <div style="margin-bottom: 1rem;">
+      <strong>Successfully Imported Records:</strong> <span class="badge badge-success">{{ imported_count }}</span>
+      <strong style="margin-left: 1.5rem;">Validation Errors / Warnings:</strong> <span class="badge {% if errors %}badge-danger{% else %}badge-success{% endif %}">{{ errors|length }}</span>
+    </div>
+
+    {% if errors %}
+      <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1rem;">
+        <h4 style="font-size: 0.9rem; font-weight: 700; color: #991b1b; margin-bottom: 0.5rem;">Detected Data Issues:</h4>
+        <ul style="margin-left: 1.25rem; font-size: 0.85rem; color: #b91c1c;">
+          {% for err in errors %}
+            <li>{{ err }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% else %}
+      <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 1rem; color: #065f46; font-size: 0.9rem;">
+        ✅ All records passed schema and validation constraints with zero data anomalies.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- CSV Schema Documentation -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">📋 Required CSV Formats & Column Definitions</span>
+  </div>
+  <div class="card-body">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+        <h4 style="font-size: 0.9rem; font-weight: 700; color: var(--primary-navy); margin-bottom: 0.5rem;">Students Master CSV</h4>
+        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem;">Mandatory columns:</p>
+        <code style="font-size: 0.78rem; display: block; background: #fff; padding: 0.5rem; border-radius: 4px; border: 1px solid #e2e8f0;">
+          student_id, first_name, last_name, email, department, academic_year, semester, section
+        </code>
+      </div>
+
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+        <h4 style="font-size: 0.9rem; font-weight: 700; color: var(--primary-navy); margin-bottom: 0.5rem;">Attendance CSV</h4>
+        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem;">Mandatory columns:</p>
+        <code style="font-size: 0.78rem; display: block; background: #fff; padding: 0.5rem; border-radius: 4px; border: 1px solid #e2e8f0;">
+          student_id, status (Present/Absent/On Leave), remarks
+        </code>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

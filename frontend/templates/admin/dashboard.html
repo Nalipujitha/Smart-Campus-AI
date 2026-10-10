@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Overview - Institutional Command Center{% endblock %}
+{% block header_title %}Institutional Command Center{% endblock %}
+
+{% block header_actions %}
+  <div style="display: flex; gap: 0.75rem; align-items: center;">
+    <span class="badge badge-primary">Admin Control Active</span>
+    <a href="{{ url_for('admin.reports') }}" class="btn btn-secondary btn-sm">📊 Export Data</a>
+    <a href="{{ url_for('admin.students') }}" class="btn btn-primary btn-sm">+ Enroll Student</a>
+  </div>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Institutional KPI Metric Row -->
+  <div class="metrics-grid">
+    <!-- Total Students -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Total Enrolled</span>
+        <div class="metric-icon icon-blue">👥</div>
+      </div>
+      <div class="metric-value">{{ total_students }}</div>
+      <div class="metric-footer">
+        <span class="status-indicator status-good"></span>
+        <span class="metric-trend">{{ active_students }} Active Students</span>
+      </div>
+    </div>
+
+    <!-- Total Faculty -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Faculty Advisors</span>
+        <div class="metric-icon icon-purple">🎓</div>
+      </div>
+      <div class="metric-value">{{ total_faculty }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Across {{ total_depts }} Departments</span>
+      </div>
+    </div>
+
+    <!-- Avg Attendance -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Campus Attendance</span>
+        <div class="metric-icon {% if avg_attendance >= 75 %}icon-green{% else %}icon-amber{% endif %}">📅</div>
+      </div>
+      <div class="metric-value">{{ avg_attendance }}%</div>
+      <div class="metric-footer">
+        <span class="status-indicator {% if low_att_students > 0 %}status-warning{% else %}status-good{% endif %}"></span>
+        <span class="metric-trend">{{ low_att_students }} students below 75%</span>
+      </div>
+    </div>
+
+    <!-- Avg CGPA -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Academic Benchmark</span>
+        <div class="metric-icon icon-blue">📈</div>
+      </div>
+      <div class="metric-value">{{ avg_gpa }} <span style="font-size: 0.9rem; font-weight: normal; color: #64748b;">/ 10</span></div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Institutional Cumulative GPA</span>
+      </div>
+    </div>
+
+    <!-- Students at Risk -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">High Academic Risk</span>
+        <div class="metric-icon icon-red">⚠️</div>
+      </div>
+      <div class="metric-value" style="color: #dc2626;">{{ high_risk_count }}</div>
+      <div class="metric-footer">
+        <span class="status-indicator status-danger"></span>
+        <span class="metric-trend">{{ medium_risk_count }} moderate risk</span>
+      </div>
+    </div>
+
+    <!-- Placement Success -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Placement Offers</span>
+        <div class="metric-icon icon-green">💼</div>
+      </div>
+      <div class="metric-value">{{ total_offers }}</div>
+      <div class="metric-footer">
+        <span class="status-indicator status-good"></span>
+        <span class="metric-trend">{{ placement_rate }}% Placement Rate</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analytics and Visual Breakdown Grid -->
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+    
+    <!-- Department Distribution Card -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">🏫 Student Enrollment by Department</span>
+        <span class="badge badge-info">{{ departments|length }} Departments</span>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Department</th>
+              <th>Enrolled Students</th>
+              <th>Share of Campus</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in dept_distribution %}
+            <tr>
+              <td style="font-weight: 600;">{{ item.department }}</td>
+              <td>{{ item.count }} Students</td>
+              <td style="width: 40%;">
+                {% set pct = (item.count / total_students * 100)|round(1) if total_students > 0 else 0 %}
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div class="progress-bar-container" style="flex: 1;">
+                    <div class="progress-bar-fill fill-blue" style="width: {{ pct }}%;"></div>
+                  </div>
+                  <span style="font-size: 0.8rem; color: #64748b; min-width: 40px;">{{ pct }}%</span>
+                </div>
+              </td>
+              <td>
+                <a href="{{ url_for('admin.students', department=item.department) }}" class="btn btn-secondary btn-sm">Filter →</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Quick Operations & Mentoring Status -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">⚡ Quick Management</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <a href="{{ url_for('admin.students') }}" class="btn btn-secondary" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>👥 Student Roster & Add</span>
+            <span>→</span>
+          </a>
+          <a href="{{ url_for('admin.faculty') }}" class="btn btn-secondary" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>🎓 Faculty Accounts & Depts</span>
+            <span>→</span>
+          </a>
+          <a href="{{ url_for('admin.attendance') }}" class="btn btn-secondary" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>📅 Attendance Compliance Log</span>
+            <span>→</span>
+          </a>
+          <a href="{{ url_for('admin.risk_analysis') }}" class="btn btn-secondary" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>⚠️ Multi-Factor Risk Engine</span>
+            <span>→</span>
+          </a>
+          <a href="{{ url_for('admin.settings') }}" class="btn btn-secondary" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>⚙️ System Weights & Policy</span>
+            <span>→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Live Campus Interventions Widget -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🩺 Mentoring Oversight</span>
+        </div>
+        <div style="padding: 0.5rem 0;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span style="color: #64748b; font-size: 0.85rem;">Active Interventions:</span>
+            <span style="font-weight: 700; color: #0284c7;">{{ open_interventions }} Open Cases</span>
+          </div>
+          <p style="font-size: 0.82rem; color: #64748b; line-height: 1.4; margin-bottom: 1rem;">
+            Faculty mentors are assigned to supervise high-risk and attendance-shortage students.
+          </p>
+          <a href="{{ url_for('admin.interventions') }}" class="btn btn-primary btn-sm" style="width: 100%; display: flex; justify-content: center;">
+            Review Interventions →
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Real-Time Administrative Audit Trail -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">🛡️ Recent Administrative & System Audit Trail</span>
+      <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-secondary btn-sm">View All Logs</a>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>User</th>
+            <th>Action</th>
+            <th>Module</th>
+            <th>Details</th>
+            <th>IP Address</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in recent_audits %}
+          <tr>
+            <td style="font-size: 0.8rem; color: #64748b;">{{ a.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            <td><strong>{{ a.user.username if a.user else 'System' }}</strong></td>
+            <td><span class="badge badge-info">{{ a.action }}</span></td>
+            <td>{{ a.module }}</td>
+            <td style="max-width: 320px; font-size: 0.82rem; color: #334155;">{{ a.details }}</td>
+            <td style="font-family: monospace; font-size: 0.78rem;">{{ a.ip_address or '127.0.0.1' }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" style="text-align: center; color: #94a3b8; padding: 2rem;">No audit logs recorded yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

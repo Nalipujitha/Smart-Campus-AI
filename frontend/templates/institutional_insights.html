@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Executive Institutional Analytics - Smart Campus Analytics{% endblock %}
+{% block header_title %}Institutional Decision Intelligence & Student Success Overview{% endblock %}
+
+{% block header_actions %}
+  {% if current_user.role == 'Admin' %}
+    <form method="POST" action="{{ url_for('analytics.recalculate_scores') }}" style="display:inline;">
+      <button type="submit" class="btn btn-secondary btn-sm">🔄 Recalculate Scoring Matrix</button>
+    </form>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<!-- Filter Bar -->
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-body" style="padding: 1rem;">
+    <form method="GET" action="{{ url_for('analytics.institutional_insights') }}" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+      <div style="flex: 2; min-width: 200px;">
+        <select name="department" class="form-control" onchange="this.form.submit()" style="width: 100%; padding: 0.45rem 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+          <option value="">All Departments</option>
+          {% for dept in departments %}
+            <option value="{{ dept }}" {% if selected_dept == dept %}selected{% endif %}>{{ dept }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="flex: 1; min-width: 140px;">
+        <select name="academic_year" class="form-control" onchange="this.form.submit()" style="width: 100%; padding: 0.45rem 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+          <option value="">All Academic Years</option>
+          <option value="1" {% if selected_year == 1 %}selected{% endif %}>Year 1</option>
+          <option value="2" {% if selected_year == 2 %}selected{% endif %}>Year 2</option>
+          <option value="3" {% if selected_year == 3 %}selected{% endif %}>Year 3</option>
+          <option value="4" {% if selected_year == 4 %}selected{% endif %}>Year 4</option>
+        </select>
+      </div>
+
+      <div style="flex: 1; min-width: 140px;">
+        <select name="semester" class="form-control" onchange="this.form.submit()" style="width: 100%; padding: 0.45rem 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+          <option value="">All Semesters</option>
+          {% for sem in range(1, 9) %}
+            <option value="{{ sem }}" {% if selected_sem == sem %}selected{% endif %}>Semester {{ sem }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem; margin-left: auto;">
+        <button type="submit" class="btn btn-primary btn-sm">Apply Filters</button>
+        {% if selected_dept or selected_year or selected_sem %}
+          <a href="{{ url_for('analytics.institutional_insights') }}" class="btn btn-secondary btn-sm">Clear</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Executive Summary Cards -->
+<div class="metrics-grid" style="margin-bottom: 1.5rem;">
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-blue">🏛️</div>
+    <div class="stat-content">
+      <div class="stat-label">Total Analyzed</div>
+      <div class="stat-value">{{ summary.total_students }}</div>
+      <div class="stat-subtext">Active student enrollments</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-teal">🎯</div>
+    <div class="stat-content">
+      <div class="stat-label">Mean Success Score</div>
+      <div class="stat-value" style="color: #0d9488;">{{ summary.avg_success_score }} <span style="font-size: 0.8rem; color: #64748b;">/ 100</span></div>
+      <div class="stat-subtext">Multi-indicator composite</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-green">🕒</div>
+    <div class="stat-content">
+      <div class="stat-label">Campus Attendance</div>
+      <div class="stat-value">{{ summary.avg_attendance_pct }}%</div>
+      <div class="stat-subtext">{{ summary.attendance_concern_count }} below 75% cutoff</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-purple">💼</div>
+    <div class="stat-content">
+      <div class="stat-label">Placement Readiness</div>
+      <div class="stat-value">{{ summary.avg_placement_readiness }}%</div>
+      <div class="stat-subtext">Campus-wide preparedness</div>
+    </div>
+  </div>
+
+  <div class="stat-card" style="border-top: 3px solid #dc2626;">
+    <div class="stat-icon-wrapper stat-icon-red">🚨</div>
+    <div class="stat-content">
+      <div class="stat-label">Immediate Attention</div>
+      <div class="stat-value" style="color: #dc2626;">{{ summary.immediate_attention_count }}</div>
+      <div class="stat-subtext">High-risk & critical flags</div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Student Segmentation Intelligence -->
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <span class="card-title">📊 Institutional Student Segmentation Cohorts</span>
+      <div style="font-size: 0.75rem; color: #64748b;">Actionable student clusters based on academic standing, LMS engagement, and placement outcomes.</div>
+    </div>
+    <a href="{{ url_for('analytics.segmentation_view', department=selected_dept) }}" class="btn btn-secondary btn-sm">Full Segmentation Hub →</a>
+  </div>
+  <div class="card-body">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+      {% for seg in summary.segment_distribution %}
+        <a href="{{ url_for('analytics.segmentation_view', department=selected_dept, segment_id=seg.segment_id) }}" style="text-decoration: none; display: block;">
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-top: 4px solid {{ seg.badge_color }}; border-radius: 8px; padding: 1rem; height: 100%; transition: transform 0.15s;">
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 0.35rem;">
+              {{ seg.short_name }}
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.35rem;">
+              <span style="font-size: 1.6rem; font-weight: 800; color: #0f172a;">{{ seg.count }}</span>
+              <span class="badge" style="background: {{ seg.badge_color }}20; color: {{ seg.badge_color }}; font-weight: 700; font-size: 0.78rem;">
+                {{ seg.percentage }}%
+              </span>
+            </div>
+            <div style="font-size: 0.72rem; color: #64748b; line-height: 1.3;">
+              {{ seg.description }}
+            </div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- 3. Two-Column Layout: Department Comparison & Top Risk Factors -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+  
+  <!-- Department Success Scores & Risk Breakdown Table -->
+  <div class="card" style="margin-bottom: 0;">
+    <div class="card-header">
+      <span class="card-title">🏢 Department-Wise Success & Risk Distribution</span>
+    </div>
+    <div class="card-body" style="padding: 0;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Department</th>
+            <th>Avg Score</th>
+            <th>Risk Breakdown (H / M / L)</th>
+            <th>Placement</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in summary.department_success_scores %}
+            <tr>
+              <td><strong style="font-size: 0.8rem; color: #0f172a;">{{ d.department }}</strong></td>
+              <td>
+                <div style="font-weight: 700; color: #0d9488;">{{ d.average_score }}/100</div>
+              </td>
+              <td>
+                <div style="display: flex; gap: 0.35rem; font-size: 0.75rem;">
+                  <span class="badge badge-danger" title="High Risk">{{ d.risk_breakdown.High }}</span>
+                  <span class="badge badge-warning" title="Medium Risk">{{ d.risk_breakdown.Medium }}</span>
+                  <span class="badge badge-success" title="Low Risk">{{ d.risk_breakdown.Low }}</span>
+                </div>
+              </td>
+              <td>
+                {% for p in summary.placement_by_dept %}
+                  {% if p.department == d.department %}
+                    <span style="font-weight: 600; font-size: 0.8rem;">{{ p.average_readiness }}%</span>
+                  {% endif %}
+                {% endfor %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Top Contributing Risk Factors Breakdown -->
+  <div class="card" style="margin-bottom: 0;">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <span class="card-title">⚠️ Top Contributing Risk Factors</span>
+      <a href="{{ url_for('analytics.risk_analysis', department=selected_dept) }}" class="btn btn-secondary btn-sm">At-Risk Roster →</a>
+    </div>
+    <div class="card-body" style="padding: 0;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Risk Factor Dimension</th>
+            <th>Affected Students</th>
+            <th>Cohort Impact</th>
+            <th>Severity</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rf in summary.top_risk_factors %}
+            <tr>
+              <td>
+                <strong style="font-size: 0.82rem; color: #0f172a;">{{ rf.factor }}</strong>
+                <div style="font-size: 0.72rem; color: #64748b;">{{ rf.category }}</div>
+              </td>
+              <td>
+                <span style="font-weight: 700; color: #dc2626;">{{ rf.count }} students</span>
+              </td>
+              <td>
+                <div style="font-size: 0.78rem; font-weight: 600;">{{ rf.percentage }}%</div>
+                <div class="progress-bar-container" style="height: 5px; margin: 0;">
+                  <div class="progress-bar-fill fill-red" style="width: {{ rf.percentage }}%;"></div>
+                </div>
+              </td>
+              <td>
+                <span class="badge {{ 'badge-danger' if rf.impact == 'High' else 'badge-warning' }}">
+                  {{ rf.impact }}
+                </span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- 4. Faculty Interventions & Follow-Up Lifecycle -->
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <span class="card-title">📋 Faculty Intervention Pipeline & Status Tracking</span>
+      <div style="font-size: 0.75rem; color: #64748b;">Live status of advisory sessions, remedial follow-ups, and student support actions.</div>
+    </div>
+    <a href="{{ url_for('interventions.index') }}" class="btn btn-primary btn-sm">Open Interventions Manager →</a>
+  </div>
+  <div class="card-body">
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; text-align: center;">
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+        <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">OPEN / PENDING</div>
+        <div style="font-size: 1.8rem; font-weight: 800; color: #2563eb;">{{ summary.intervention_status_distribution.Open }}</div>
+      </div>
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+        <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">IN PROGRESS</div>
+        <div style="font-size: 1.8rem; font-weight: 800; color: #f59e0b;">{{ summary.intervention_status_distribution['In Progress'] }}</div>
+      </div>
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+        <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">COMPLETED</div>
+        <div style="font-size: 1.8rem; font-weight: 800; color: #10b981;">{{ summary.intervention_status_distribution.Completed }}</div>
+      </div>
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+        <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">OVERDUE FOLLOW-UPS</div>
+        <div style="font-size: 1.8rem; font-weight: 800; color: #dc2626;">{{ summary.overdue_interventions_count }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

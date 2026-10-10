@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Reports & Alerts - Smart Campus Analytics{% endblock %}
+{% block header_title %}Attendance Reports & Policy Monitoring{% endblock %}
+
+{% block content %}
+
+{% if is_single_student %}
+  <!-- Individual Student View -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">👤 Attendance History for {{ student.full_name }} ({{ student.student_id }})</span>
+    </div>
+    <div class="card-body">
+      <div style="display: flex; justify-content: space-around; text-align: center; margin-bottom: 1.5rem;">
+        <div>
+          <div style="font-size: 1.6rem; font-weight: 800; color: {% if stats.attendance_percentage and stats.attendance_percentage >= 75 %}#10b981{% else %}#ef4444{% endif %};">
+            {{ stats.attendance_percentage if stats.attendance_percentage is not none else 'N/A' }}%
+          </div>
+          <div style="font-size: 0.75rem; color: #64748b;">Overall Attendance</div>
+        </div>
+        <div>
+          <div style="font-size: 1.6rem; font-weight: 700; color: #10b981;">{{ stats.present_count }}</div>
+          <div style="font-size: 0.75rem; color: #64748b;">Present</div>
+        </div>
+        <div>
+          <div style="font-size: 1.6rem; font-weight: 700; color: #ef4444;">{{ stats.absent_count }}</div>
+          <div style="font-size: 0.75rem; color: #64748b;">Absent</div>
+        </div>
+        <div>
+          <div style="font-size: 1.6rem; font-weight: 700; color: #f59e0b;">{{ stats.leave_count }}</div>
+          <div style="font-size: 0.75rem; color: #64748b;">On Leave</div>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Subject</th>
+              <th>Status</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rec, sess in history %}
+              <tr>
+                <td>{{ sess.session_date.strftime('%Y-%m-%d') }}</td>
+                <td>{{ sess.subject }}</td>
+                <td>
+                  <span class="badge {% if rec.status == 'Present' %}badge-success{% elif rec.status == 'Absent' %}badge-danger{% else %}badge-warning{% endif %}">
+                    {{ rec.status }}
+                  </span>
+                </td>
+                <td>{{ rec.remarks or '-' }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+{% else %}
+
+  <!-- Attendance Warnings & Alerts Card -->
+  <div class="card" style="border-left: 4px solid var(--danger);">
+    <div class="card-header">
+      <span class="card-title">⚠️ Attendance Shortage Alerts (&lt; 75% Threshold)</span>
+    </div>
+    <div class="card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Department</th>
+              <th>Sem</th>
+              <th>Attendance %</th>
+              <th>Severity</th>
+              <th>Explanation</th>
+              <th>Recommended Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if alerts %}
+              {% for a in alerts %}
+                <tr>
+                  <td>
+                    <a href="{{ url_for('students.view_student', student_id=a.student_id) }}" style="font-weight: 600;">
+                      {{ a.student_name }}
+                    </a>
+                    <div style="font-size: 0.75rem; color: #64748b;">{{ a.student_id }}</div>
+                  </td>
+                  <td>{{ a.department }}</td>
+                  <td>Sem {{ a.semester }}</td>
+                  <td>
+                    <div style="font-weight: 700; color: {% if a.severity == 'Critical' %}#ef4444{% else %}#f59e0b{% endif %};">
+                      {{ a.attendance_percentage }}%
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge {% if a.severity == 'Critical' %}badge-danger{% else %}badge-warning{% endif %}">
+                      {{ a.severity }}
+                    </span>
+                  </td>
+                  <td style="font-size: 0.8rem; color: #475569;">{{ a.explanation }}</td>
+                  <td style="font-size: 0.8rem; color: #2563eb;">{{ a.suggested_action }}</td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="7" style="text-align: center; padding: 2rem; color: #64748b;">
+                  No students currently below the attendance warning threshold.
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Department Attendance Chart -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">📊 Average Attendance Rate by Department</span>
+    </div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="deptAttendanceChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/attendance_reports.js') }}"></script>
+<script>
+  window.ATTENDANCE_SUMMARY = {{ summary|tojson if summary else '{}' }};
+</script>
+{% endblock %}

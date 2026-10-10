@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}System Audit Logs - Admin Portal{% endblock %}
+{% block header_title %}System Audit Trail & Compliance{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <span class="card-title">Live Audit Events & Security Trail</span>
+      <span style="font-size: 0.85rem; color: #64748b;">Page {{ pagination.page }} of {{ pagination.pages or 1 }}</span>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>User</th>
+            <th>Action</th>
+            <th>Module</th>
+            <th>Details</th>
+            <th>IP Address</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in logs %}
+          <tr>
+            <td style="font-size: 0.8rem; color: #64748b;">{{ a.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            <td><strong>{{ a.user.username if a.user else 'System / Guest' }}</strong></td>
+            <td><span class="badge badge-info">{{ a.action }}</span></td>
+            <td>{{ a.module }}</td>
+            <td style="max-width: 400px; font-size: 0.82rem; color: #334155;">{{ a.details }}</td>
+            <td style="font-family: monospace; font-size: 0.78rem;">{{ a.ip_address or '127.0.0.1' }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" style="text-align: center; color: #94a3b8; padding: 2rem;">No audit records found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if pagination.pages > 1 %}
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border-top: 1px solid #f1f5f9;">
+      <div>
+        Showing {{ (pagination.page - 1) * 30 + 1 }} to {{ [pagination.page * 30, pagination.total]|min }} of {{ pagination.total }} logs
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        {% if pagination.has_prev %}
+          <a href="{{ url_for('admin.audit_logs', page=pagination.prev_num, module=selected_module) }}" class="btn btn-secondary btn-sm">← Previous</a>
+        {% endif %}
+        {% if pagination.has_next %}
+          <a href="{{ url_for('admin.audit_logs', page=pagination.next_num, module=selected_module) }}" class="btn btn-secondary btn-sm">Next →</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

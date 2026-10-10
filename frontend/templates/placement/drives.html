@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Recruitment Drives Calendar - Placement Portal{% endblock %}
+{% block header_title %}Campus Recruitment Drives Calendar{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">📅 Upcoming Recruitment Drives & On-Campus Interviews</span>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Drive Date</th>
+            <th>Company</th>
+            <th>Role Title</th>
+            <th>CTC Package</th>
+            <th>Min Criteria</th>
+            <th>Registered Applicants</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in drives %}
+          <tr>
+            <td style="font-weight: 700; color: #7c3aed;">{{ d.drive_date }}</td>
+            <td style="font-weight: 600; color: #0284c7;">{{ d.company.name if d.company else 'Recruiter' }}</td>
+            <td>{{ d.title }}</td>
+            <td><strong style="color: #16a34a;">{{ d.ctc_package }}</strong></td>
+            <td>{{ d.min_cgpa }} CGPA | {{ d.min_readiness }}% Read.</td>
+            <td><strong>{{ d.applications|length }}</strong> Applicants</td>
+            <td>
+              <a href="{{ url_for('placement.candidates', job_id=d.id) }}" class="btn btn-secondary btn-sm">Candidates →</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" style="text-align: center; color: #94a3b8; padding: 2rem;">No upcoming drives scheduled.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Faculty Interventions Oversight - Admin Portal{% endblock %}
+{% block header_title %}Faculty Interventions & Mentoring Oversight{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Summary Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Open Cases</span>
+        <div class="metric-icon icon-red">🚨</div>
+      </div>
+      <div class="metric-value" style="color: #dc2626;">{{ open_count }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Action Required</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">In Progress</span>
+        <div class="metric-icon icon-amber">⏳</div>
+      </div>
+      <div class="metric-value" style="color: #d97706;">{{ in_progress_count }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Under Active Remediation</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Resolved / Closed</span>
+        <div class="metric-icon icon-green">✅</div>
+      </div>
+      <div class="metric-value" style="color: #16a34a;">{{ completed_count }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Successfully Resolved</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Total Cases</span>
+        <div class="metric-icon icon-blue">📋</div>
+      </div>
+      <div class="metric-value">{{ interventions|length }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">All Campus Interventions</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interventions Table -->
+  <div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <span class="card-title">Campus-Wide Mentoring & Remedial Cases</span>
+      <form method="GET" action="{{ url_for('admin.interventions') }}" style="display: flex; gap: 0.5rem;">
+        <select name="status" onchange="this.form.submit()" class="form-control" style="padding: 0.35rem 0.6rem; font-size: 0.85rem;">
+          <option value="">All Statuses</option>
+          <option value="Open" {% if selected_status == 'Open' %}selected{% endif %}>Open</option>
+          <option value="In Progress" {% if selected_status == 'In Progress' %}selected{% endif %}>In Progress</option>
+          <option value="Completed" {% if selected_status == 'Completed' %}selected{% endif %}>Completed</option>
+        </select>
+      </form>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Student</th>
+            <th>Faculty Advisor</th>
+            <th>Title & Category</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Follow-up Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inter in interventions %}
+          <tr>
+            <td style="font-size: 0.8rem; color: #64748b;">{{ inter.session_date }}</td>
+            <td>
+              <div style="font-weight: 600;">{{ inter.student.full_name if inter.student else inter.student_id }}</div>
+              <div style="font-size: 0.75rem; color: #64748b; font-family: monospace;">{{ inter.student_id }}</div>
+            </td>
+            <td>{{ inter.faculty.full_name if inter.faculty else 'General Advisor' }}</td>
+            <td>
+              <div style="font-weight: 600;">{{ inter.title }}</div>
+              <span class="badge badge-info" style="font-size: 0.72rem;">{{ inter.category }}</span>
+            </td>
+            <td>
+              {% if inter.priority == 'High' %}
+                <span class="badge badge-danger">High</span>
+              {% elif inter.priority == 'Medium' %}
+                <span class="badge badge-warning">Medium</span>
+              {% else %}
+                <span class="badge badge-success">Low</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if inter.status == 'Open' %}
+                <span class="badge badge-danger">Open</span>
+              {% elif inter.status == 'In Progress' %}
+                <span class="badge badge-warning">In Progress</span>
+              {% else %}
+                <span class="badge badge-success">Completed</span>
+              {% endif %}
+            </td>
+            <td style="font-size: 0.82rem; color: #475569;">{{ inter.follow_up_date or 'N/A' }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" style="text-align: center; color: #94a3b8; padding: 2rem;">No intervention cases found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Practice Problems - Coding Lab{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coding_lab.css') }}">
+
+<div class="student-dashboard-wrapper">
+  
+  <!-- 1. Header & Navigation -->
+  <div class="coding-lab-header">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+        <span class="badge" style="background: #2563eb; color: #fff; font-size: 0.72rem;">CODING LAB</span>
+        <span style="font-size: 0.8rem; color: #94a3b8;">Interactive Problem Catalog</span>
+      </div>
+      <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin: 0;">
+        Coding Practice Library 🧩
+      </h2>
+      <p style="color: #94a3b8; font-size: 0.88rem; margin: 0.25rem 0 0 0;">
+        Explore over {{ total_count }} curated problems across algorithms, data structures, strings, and core math.
+      </p>
+    </div>
+
+    <!-- Navigation Pills -->
+    <div class="coding-nav-pills">
+      <a href="{{ url_for('coding_lab.dashboard') }}">
+        📊 Overview
+      </a>
+      <a href="{{ url_for('coding_lab.practice_catalog') }}" class="active">
+        🧩 Practice Problems
+      </a>
+      <a href="{{ url_for('coding_lab.submissions_list') }}">
+        📜 Submissions
+      </a>
+      <a href="{{ url_for('coding_lab.progress_view') }}">
+        📈 Topic Mastery
+      </a>
+    </div>
+  </div>
+
+  <!-- 2. Search & Filter Bar -->
+  <form method="GET" action="{{ url_for('coding_lab.practice_catalog') }}" class="practice-filter-bar">
+    <!-- Search Input -->
+    <div style="flex: 1; min-width: 240px;">
+      <input 
+        type="text" 
+        name="search" 
+        value="{{ current_search }}" 
+        placeholder="🔍 Search problems by title or keyword..." 
+        style="width: 100%; padding: 0.55rem 0.85rem; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; font-size: 0.88rem;"
+      >
+    </div>
+
+    <!-- Topic Select -->
+    <div>
+      <select name="topic" style="padding: 0.55rem 0.85rem; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; font-size: 0.88rem;">
+        <option value="">All Topics</option>
+        {% for top in topics %}
+        <option value="{{ top }}" {% if current_topic == top %}selected{% endif %}>{{ top }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Difficulty Select -->
+    <div>
+      <select name="difficulty" style="padding: 0.55rem 0.85rem; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; font-size: 0.88rem;">
+        <option value="">All Difficulties</option>
+        <option value="Easy" {% if current_difficulty == 'Easy' %}selected{% endif %}>Easy</option>
+        <option value="Medium" {% if current_difficulty == 'Medium' %}selected{% endif %}>Medium</option>
+        <option value="Hard" {% if current_difficulty == 'Hard' %}selected{% endif %}>Hard</option>
+      </select>
+    </div>
+
+    <!-- Status Select -->
+    <div>
+      <select name="status" style="padding: 0.55rem 0.85rem; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; font-size: 0.88rem;">
+        <option value="">All Statuses</option>
+        <option value="Solved" {% if current_status == 'Solved' %}selected{% endif %}>Solved</option>
+        <option value="Attempted" {% if current_status == 'Attempted' %}selected{% endif %}>Attempted</option>
+        <option value="Todo" {% if current_status == 'Todo' %}selected{% endif %}>Unsolved (Todo)</option>
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-sm" style="background: #2563eb; border: none; padding: 0.55rem 1rem;">
+      Apply Filters
+    </button>
+    {% if current_search or current_topic or current_difficulty or current_status %}
+    <a href="{{ url_for('coding_lab.practice_catalog') }}" class="btn btn-secondary btn-sm" style="padding: 0.55rem 0.75rem;">
+      Clear
+    </a>
+    {% endif %}
+  </form>
+
+  <!-- 3. Problem List Table Container -->
+  <div class="problem-table-container">
+    <div style="padding: 0.75rem 1.25rem; background: #161b22; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 0.85rem; color: #8b949e; font-weight: 600;">
+        Showing {{ problems|length }} Problems
+      </span>
+      <span style="font-size: 0.8rem; color: #8b949e;">
+        🟢 Solved &bull; 🟡 Attempted &bull; ⚪ Todo
+      </span>
+    </div>
+
+    {% if problems %}
+      {% for item in problems %}
+      {% set prob = item.problem %}
+      <div class="problem-row">
+        <!-- Status Icon -->
+        <div style="width: 32px; font-size: 1.1rem; text-align: center;">
+          {% if item.status == 'Solved' %}
+            <span title="Solved" style="color: #22c55e;">✓</span>
+          {% elif item.status == 'Attempted' %}
+            <span title="Attempted" style="color: #eab308;">●</span>
+          {% else %}
+            <span title="Todo" style="color: #484f58;">○</span>
+          {% endif %}
+        </div>
+
+        <!-- Title & Topic -->
+        <div style="flex: 1; min-width: 200px; padding: 0 0.75rem;">
+          <a href="{{ url_for('coding_lab.editor_view', identifier=prob.slug) }}" style="color: #f0f6fc; font-weight: 600; text-decoration: none; font-size: 0.95rem; display: block;">
+            {{ prob.title }}
+          </a>
+          <span style="font-size: 0.75rem; color: #8b949e;">
+            {{ prob.topic }} &bull; {{ prob.points }} pts
+          </span>
+        </div>
+
+        <!-- Difficulty Badge -->
+        <div style="width: 100px; text-align: center;">
+          <span class="diff-badge diff-{{ prob.difficulty|lower }}">
+            {{ prob.difficulty }}
+          </span>
+        </div>
+
+        <!-- Acceptance Rate -->
+        <div style="width: 120px; text-align: center; font-size: 0.82rem; color: #8b949e;">
+          {{ item.acceptance_rate }}% acc
+        </div>
+
+        <!-- Action Button -->
+        <div style="width: 110px; text-align: right;">
+          <a href="{{ url_for('coding_lab.editor_view', identifier=prob.slug) }}" class="btn btn-sm {% if item.status == 'Solved' %}btn-secondary{% else %}btn-primary{% endif %}" style="font-size: 0.8rem; padding: 0.35rem 0.85rem; {% if item.status != 'Solved' %}background: #2563eb; border: none;{% endif %}">
+            {% if item.status == 'Solved' %}Review{% else %}Solve &rarr;{% endif %}
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="text-align: center; padding: 3rem; color: #8b949e;">
+        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">No coding problems matched your query.</p>
+        <a href="{{ url_for('coding_lab.practice_catalog') }}" class="btn btn-secondary btn-sm">Clear Filter & View All</a>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

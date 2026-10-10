@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Record Assessment Marks - Faculty Portal{% endblock %}
+{% block header_title %}Subject Marks & Assessment Entry{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Subject & Semester Selector -->
+  <div class="card" style="padding: 1.25rem;">
+    <form method="GET" action="{{ url_for('faculty.academics') }}" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+      <div style="flex: 2; min-width: 220px;">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 0.3rem;">Subject</label>
+        <select name="subject" class="form-control" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+          {% for sub in subjects %}
+            <option value="{{ sub }}" {% if selected_subject == sub %}selected{% endif %}>{{ sub }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="flex: 1; min-width: 140px;">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 0.3rem;">Semester</label>
+        <select name="semester" class="form-control" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+          {% for sem in range(1, 9) %}
+            <option value="{{ sem }}" {% if selected_sem == sem %}selected{% endif %}>Semester {{ sem }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Load Class Roster</button>
+    </form>
+  </div>
+
+  <!-- Marks Entry Roster -->
+  <div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <span class="card-title">📝 Score Sheet: {{ selected_subject }} (Semester {{ selected_sem }})</span>
+      <span class="badge badge-info">Internal: 30 Max | External: 70 Max</span>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student ID</th>
+            <th>Student Name</th>
+            <th>Internal Marks (30)</th>
+            <th>External Marks (70)</th>
+            <th>Total Marks (100)</th>
+            <th>Grade</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in dept_students %}
+          {% set sc = scores_map.get(s.student_id) %}
+          <tr>
+            <td style="font-family: monospace; font-weight: 700;">{{ s.student_id }}</td>
+            <td style="font-weight: 600;">{{ s.full_name }}</td>
+            <form method="POST" action="{{ url_for('faculty.academics') }}">
+              <input type="hidden" name="student_id" value="{{ s.student_id }}">
+              <input type="hidden" name="semester" value="{{ selected_sem }}">
+              <input type="hidden" name="subject_name" value="{{ selected_subject }}">
+              <td>
+                <input type="number" step="0.5" min="0" max="30" name="internal_marks" value="{{ sc.internal_marks if sc else 22.0 }}" required style="width: 80px; padding: 0.35rem 0.5rem; border: 1px solid #cbd5e1; border-radius: 4px;">
+              </td>
+              <td>
+                <input type="number" step="0.5" min="0" max="70" name="external_marks" value="{{ sc.external_marks if sc else 52.0 }}" required style="width: 80px; padding: 0.35rem 0.5rem; border: 1px solid #cbd5e1; border-radius: 4px;">
+              </td>
+              <td>
+                <strong>{{ sc.marks_obtained if sc else 74.0 }}</strong> / 100
+              </td>
+              <td>
+                <span class="badge {% if sc and sc.grade in ['O', 'A+', 'A'] %}badge-success{% elif sc and sc.grade == 'F' %}badge-danger{% else %}badge-info{% endif %}">
+                  {{ sc.grade if sc else 'A' }}
+                </span>
+              </td>
+              <td>
+                <button type="submit" class="btn btn-secondary btn-sm">💾 Save</button>
+              </td>
+            </form>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" style="text-align: center; color: #94a3b8; padding: 2rem;">No students found for this semester.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,111 @@
+student_id,target_role,skills,coding_score,aptitude_score
+STU2024001,Backend Developer,"Pandas, React, Java, SQL, Python",75.2,0.0
+STU2024002,Software Developer,"Git, Pandas, Java, Linux, REST APIs",51.3,79.3
+STU2024003,Frontend Developer,"SQL, JavaScript, REST APIs, React, Java",66.2,74.2
+STU2024004,Data Analyst,"REST APIs, Git, SQL, Python, React",69.1,92.0
+STU2024005,Backend Developer,"Data Structures, Pandas, Git, Python, Java",73.2,83.3
+STU2024006,Frontend Developer,"Pandas, Git, React, Java, REST APIs",85.1,72.7
+STU2024007,Cloud or IT Support Associate,"Linux, Git, Data Structures, JavaScript, SQL",68.0,65.4
+STU2024008,Cloud or IT Support Associate,"Python, Linux, REST APIs, Pandas, JavaScript",72.8,57.8
+STU2024009,Software Developer,"Java, Pandas, Python, React, JavaScript",51.2,70.0
+STU2024010,Data Analyst,"SQL, Python, Java, Data Structures, REST APIs",67.2,92.1
+STU2024011,Cloud or IT Support Associate,"JavaScript, Data Structures, Java, React, Git",85.4,78.1
+STU2024012,Software Developer,"Git, Linux, Data Structures, Python, Java",76.9,94.3
+STU2024013,Frontend Developer,"Pandas, Data Structures, SQL, Python, Git",48.3,55.8
+STU2024014,QA Engineer,"Git, Data Structures, Python, JavaScript, React",57.6,74.0
+STU2024015,Cloud or IT Support Associate,"Python, JavaScript, React, Linux, Data Structures",79.0,62.3
+STU2024016,Cloud or IT Support Associate,"Data Structures, Python, Git, REST APIs, Linux",45.3,70.2
+STU2024017,Cloud or IT Support Associate,"Data Structures, React, Java, Linux, Pandas",60.5,57.4
+STU2024018,Software Developer,"REST APIs, JavaScript, Git, Java, Python",92.9,71.3
+STU2024019,Frontend Developer,"Java, Linux, REST APIs, JavaScript, Data Structures",49.3,76.1
+STU2024020,Cloud or IT Support Associate,"Java, SQL, Python, React, Data Structures",75.5,52.5
+STU2024021,Backend Developer,"React, REST APIs, Java, Git, Data Structures",75.0,60.5
+STU2024022,Data Analyst,"REST APIs, Java, JavaScript, Linux, React",67.7,85.2
+STU2024023,Cloud or IT Support Associate,"Java, Data Structures, SQL, JavaScript, Git",66.1,61.5
+STU2024024,Software Developer,"Python, SQL, Git, Linux, Data Structures",77.6,73.1
+STU2024025,Frontend Developer,"SQL, Linux, Git, Pandas, REST APIs",93.5,63.1
+STU2024026,Frontend Developer,"Pandas, REST APIs, Python, Data Structures, SQL",55.0,58.8
+STU2024027,Cloud or IT Support Associate,"Linux, REST APIs, JavaScript, React, Git",61.8,75.5
+STU2024028,Software Developer,"Linux, Data Structures, Python, JavaScript, Java",68.3,81.2
+STU2024029,Cloud or IT Support Associate,"React, Data Structures, REST APIs, Java, Python",48.7,66.3
+STU2024030,Cloud or IT Support Associate,"REST APIs, JavaScript, Python, Linux, Java",53.7,58.9
+STU2024031,QA Engineer,"Data Structures, SQL, REST APIs, Python, Java",90.5,87.9
+STU2024032,Software Developer,"JavaScript, Data Structures, Git, Pandas, Java",63.6,66.6
+STU2024033,Data Analyst,"Java, REST APIs, SQL, Pandas, React",63.9,58.6
+STU2024034,Frontend Developer,"Python, Data Structures, Git, React, Java",47.7,64.7
+STU2024035,QA Engineer,"Linux, Data Structures, Java, React, Pandas",75.7,85.6
+STU2024036,QA Engineer,"JavaScript, Linux, Pandas, Java, SQL",71.3,82.1
+STU2024037,QA Engineer,"React, Python, Data Structures, Java, REST APIs",56.7,70.3
+STU2024038,Frontend Developer,"JavaScript, Git, Java, Linux, Python",70.9,63.3
+STU2024039,Backend Developer,"React, Linux, Pandas, Data Structures, REST APIs",69.9,66.5
+STU2024040,Backend Developer,"Java, JavaScript, REST APIs, SQL, Git",77.2,73.1
+STU2024041,Software Developer,"JavaScript, Python, Data Structures, SQL, Java",57.5,80.4
+STU2024042,Frontend Developer,"REST APIs, SQL, Git, Python, Pandas",62.3,62.7
+STU2024043,Cloud or IT Support Associate,"Python, Linux, SQL, React, Data Structures",81.2,60.2
+STU2024044,QA Engineer,"Linux, REST APIs, JavaScript, React, Python",54.4,64.1
+STU2024045,QA Engineer,"Python, JavaScript, SQL, Git, Java",81.9,63.8
+STU2024046,Frontend Developer,"React, REST APIs, Pandas, Linux, JavaScript",61.3,74.2
+STU2024047,Frontend Developer,"JavaScript, React, Pandas, Java, Data Structures",64.3,52.9
+STU2024048,Cloud or IT Support Associate,"Git, Java, SQL, Python, JavaScript",46.6,74.9
+STU2024049,Software Developer,"React, Git, Data Structures, Java, SQL",48.5,79.7
+STU2024050,Data Analyst,"React, SQL, Java, Linux, Git",82.2,68.8
+STU2024051,Backend Developer,"React, Linux, SQL, Git, REST APIs",74.4,92.3
+STU2024052,Software Developer,"SQL, Linux, Java, React, Data Structures",57.3,77.2
+STU2024053,Data Analyst,"REST APIs, Python, Java, SQL, JavaScript",67.8,89.6
+STU2024054,Frontend Developer,"React, Data Structures, SQL, Git, JavaScript",64.2,69.4
+STU2024055,Cloud or IT Support Associate,"Python, Data Structures, SQL, Linux, JavaScript",78.3,74.2
+STU2024056,Data Analyst,"React, Pandas, Java, SQL, Python",70.2,84.0
+STU2024057,Frontend Developer,"Pandas, Python, Linux, REST APIs, React",78.8,78.7
+STU2024058,Frontend Developer,"React, Python, Pandas, SQL, Linux",51.8,81.9
+STU2024059,Software Developer,"Pandas, Data Structures, Linux, Java, REST APIs",87.1,86.9
+STU2024060,Backend Developer,"Java, Pandas, React, REST APIs, Python",45.6,80.2
+STU2024061,Cloud or IT Support Associate,"Python, Pandas, Data Structures, Linux, JavaScript",76.7,52.1
+STU2024062,Software Developer,"React, Git, Linux, Python, Pandas",83.6,50.2
+STU2024063,Frontend Developer,"Data Structures, Java, Python, REST APIs, Linux",61.9,94.5
+STU2024064,Software Developer,"SQL, REST APIs, Python, Data Structures, Git",61.4,54.8
+STU2024065,Data Analyst,"React, Java, Data Structures, Pandas, Python",53.7,66.0
+STU2024066,Data Analyst,"Data Structures, Java, Git, JavaScript, Linux",48.4,66.6
+STU2024067,Cloud or IT Support Associate,"Pandas, SQL, Git, Python, Linux",76.5,64.6
+STU2024068,Frontend Developer,"JavaScript, SQL, REST APIs, React, Linux",61.8,71.7
+STU2024069,Cloud or IT Support Associate,"Data Structures, Pandas, Python, Java, Linux",89.8,77.7
+STU2024070,QA Engineer,"Java, Python, SQL, Linux, Data Structures",52.6,63.3
+STU2024071,QA Engineer,"Linux, JavaScript, SQL, REST APIs, React",83.0,79.0
+STU2024072,Backend Developer,"Python, Data Structures, JavaScript, SQL, Java",47.7,59.3
+STU2024073,Cloud or IT Support Associate,"Data Structures, React, JavaScript, Java, REST APIs",48.2,78.3
+STU2024074,Frontend Developer,"Data Structures, SQL, Java, Linux, Git",84.8,74.7
+STU2024075,Data Analyst,"Git, SQL, Data Structures, Java, Linux",57.4,57.9
+STU2024076,Backend Developer,"Linux, Java, JavaScript, Data Structures, React",67.1,57.5
+STU2024077,Software Developer,"React, REST APIs, Java, Pandas, SQL",52.6,76.8
+STU2024078,Data Analyst,"Git, React, Linux, Python, SQL",68.5,56.1
+STU2024079,QA Engineer,"JavaScript, Linux, React, Data Structures, Pandas",63.7,93.7
+STU2024080,Data Analyst,"Python, Java, React, Git, Pandas",66.8,58.7
+STU2024081,QA Engineer,"Linux, JavaScript, Python, Pandas, Data Structures",81.8,91.7
+STU2024082,Cloud or IT Support Associate,"Python, SQL, Git, Linux, Data Structures",52.4,92.5
+STU2024083,Software Developer,"Java, REST APIs, React, Data Structures, JavaScript",90.0,76.4
+STU2024084,Data Analyst,"Git, REST APIs, React, Pandas, SQL",82.6,83.0
+STU2024085,QA Engineer,"JavaScript, SQL, Git, REST APIs, Java",64.9,91.9
+STU2024086,Software Developer,"Java, React, Pandas, JavaScript, SQL",53.5,83.0
+STU2024087,QA Engineer,"Java, Linux, Data Structures, REST APIs, React",54.1,52.7
+STU2024088,Data Analyst,"Linux, Java, SQL, Python, REST APIs",51.2,53.9
+STU2024089,Data Analyst,"Java, Python, Pandas, SQL, Linux",84.5,79.9
+STU2024090,Data Analyst,"REST APIs, Pandas, Git, Data Structures, React",75.2,84.1
+STU2024091,Backend Developer,"Data Structures, JavaScript, React, REST APIs, Git",62.8,52.6
+STU2024092,Data Analyst,"SQL, Python, Java, React, Git",80.0,62.6
+STU2024093,Cloud or IT Support Associate,"Linux, Pandas, React, JavaScript, Java",76.9,50.1
+STU2024094,Software Developer,"JavaScript, Linux, Data Structures, Git, Pandas",75.6,68.0
+STU2024095,Data Analyst,"Java, React, Git, Linux, REST APIs",88.5,82.0
+STU2024096,Software Developer,"SQL, Linux, Java, REST APIs, JavaScript",94.4,94.8
+STU2024097,Data Analyst,"Pandas, Data Structures, REST APIs, Java, React",78.0,83.9
+STU2024098,Frontend Developer,"JavaScript, React, Git, Java, REST APIs",68.8,61.6
+STU2024099,Cloud or IT Support Associate,"Linux, Java, JavaScript, React, Pandas",83.3,91.9
+STU2024100,Cloud or IT Support Associate,"React, Pandas, REST APIs, Linux, Java",50.8,60.1
+STU2024101,Cloud or IT Support Associate,"Java, JavaScript, SQL, React, Linux",73.8,92.9
+STU2024102,Data Analyst,"React, JavaScript, Pandas, REST APIs, Linux",51.3,92.0
+STU2024103,Software Developer,"Pandas, Linux, JavaScript, Java, SQL",70.0,87.7
+STU2024104,Cloud or IT Support Associate,"Python, JavaScript, Git, Linux, Pandas",94.8,55.6
+STU2024105,Data Analyst,"Git, React, Python, Pandas, SQL",80.8,56.9
+STU2024106,Software Developer,"SQL, Linux, React, REST APIs, JavaScript",53.0,91.1
+STU2024107,Data Analyst,"JavaScript, React, Pandas, Python, Git",59.1,82.7
+STU2024108,Software Developer,"SQL, JavaScript, Python, React, Pandas",77.7,63.7
+STU2024109,Frontend Developer,"Data Structures, REST APIs, Pandas, JavaScript, React",81.3,50.4
+STU2024110,Data Analyst,"React, SQL, Python, Linux, Pandas",54.0,93.8

@@ -1,0 +1,435 @@
+/* ==========================================================================
+   CODING LAB & BYTE-XL INSPIRED ONLINE IDE STYLESHEET
+   ========================================================================== */
+
+:root {
+  --code-bg-dark: #0d1117;
+  --code-surface-dark: #161b22;
+  --code-surface-raised: #21262d;
+  --code-border: #30363d;
+  --code-text: #e6edf3;
+  --code-text-muted: #8b949e;
+  --code-accent: #2563eb;
+  --code-accent-hover: #1d4ed8;
+  --code-success: #238636;
+  --code-success-bg: rgba(35, 134, 54, 0.15);
+  --code-danger: #da3633;
+  --code-danger-bg: rgba(218, 54, 51, 0.15);
+  --code-warning: #d29922;
+  --code-warning-bg: rgba(210, 153, 34, 0.15);
+  --code-cyan: #38bdf8;
+  --code-radius: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   1. Coding Lab Navigation Bar (Tab Pill Header)
+   -------------------------------------------------------------------------- */
+.coding-lab-header {
+  background: linear-gradient(135deg, #0f172a 0%, #1e1e38 100%);
+  border-radius: var(--code-radius);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.coding-nav-pills {
+  display: flex;
+  gap: 0.5rem;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 0.35rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+}
+
+.coding-nav-pills a {
+  padding: 0.45rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.coding-nav-pills a:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.coding-nav-pills a.active {
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+}
+
+/* --------------------------------------------------------------------------
+   2. Metric Cards in Coding Lab
+   -------------------------------------------------------------------------- */
+.coding-stat-card {
+  background: var(--code-surface-dark);
+  border: 1px solid var(--code-border);
+  border-radius: var(--code-radius);
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.coding-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  border-color: #3b82f6;
+}
+
+.coding-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+
+.coding-stat-icon.blue { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+.coding-stat-icon.green { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+.coding-stat-icon.orange { background: rgba(249, 115, 22, 0.15); color: #f97316; }
+.coding-stat-icon.purple { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+
+/* --------------------------------------------------------------------------
+   3. Practice Catalog & Problem Lists
+   -------------------------------------------------------------------------- */
+.practice-filter-bar {
+  background: var(--code-surface-dark);
+  border: 1px solid var(--code-border);
+  border-radius: var(--code-radius);
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.problem-table-container {
+  background: var(--code-surface-dark);
+  border: 1px solid var(--code-border);
+  border-radius: var(--code-radius);
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.problem-row {
+  display: flex;
+  align-items: center;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--code-border);
+  transition: background-color 0.15s;
+  text-decoration: none;
+  color: var(--code-text);
+}
+
+.problem-row:last-child {
+  border-bottom: none;
+}
+
+.problem-row:hover {
+  background: var(--code-surface-raised);
+}
+
+.diff-badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.diff-easy { background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+.diff-medium { background: rgba(234, 179, 8, 0.15); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3); }
+.diff-hard { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+/* --------------------------------------------------------------------------
+   4. Three-Panel ByteXL-Style Online IDE
+   -------------------------------------------------------------------------- */
+.ide-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 100px);
+  min-height: 650px;
+  background: #090d16;
+  border: 1px solid var(--code-border);
+  border-radius: var(--code-radius);
+  overflow: hidden;
+}
+
+.ide-topbar {
+  background: #111827;
+  border-bottom: 1px solid #1f2937;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  z-index: 10;
+}
+
+.ide-split-layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+@media (max-width: 1024px) {
+  .ide-split-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    height: auto;
+  }
+  .ide-wrapper {
+    height: auto;
+    min-height: 850px;
+  }
+}
+
+/* Left Panel: Problem Specifications */
+.ide-left-panel {
+  background: #0d1117;
+  border-right: 1px solid var(--code-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+}
+
+.ide-tab-header {
+  display: flex;
+  background: #161b22;
+  border-bottom: 1px solid var(--code-border);
+  padding: 0 0.5rem;
+}
+
+.ide-tab-btn {
+  padding: 0.6rem 1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #8b949e;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.ide-tab-btn:hover {
+  color: #c9d1d9;
+}
+
+.ide-tab-btn.active {
+  color: #58a6ff;
+  border-bottom-color: #58a6ff;
+  background: rgba(88, 166, 255, 0.05);
+}
+
+.ide-panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+  color: #c9d1d9;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.ide-panel-content h1,
+.ide-panel-content h2,
+.ide-panel-content h3 {
+  color: #f0f6fc;
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+.ide-panel-content code {
+  background: #161b22;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Fira Code', monospace;
+  font-size: 0.88em;
+  color: #f0883e;
+}
+
+.ide-sample-box {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-family: 'Consolas', 'Fira Code', monospace;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  color: #58a6ff;
+}
+
+/* Right / Main Panel: Editor + Bottom Console */
+.ide-main-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: #0d1117;
+}
+
+.ide-editor-header {
+  background: #161b22;
+  border-bottom: 1px solid var(--code-border);
+  padding: 0.4rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.monaco-host-container {
+  flex: 1;
+  min-height: 250px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  background: #1e1e1e;
+}
+
+/* Bottom Panel: Output, Custom Input, Test Results */
+.ide-bottom-panel {
+  height: 260px;
+  border-top: 1px solid var(--code-border);
+  background: #0d1117;
+  display: flex;
+  flex-direction: column;
+  min-height: 120px;
+  transition: height 0.2s ease;
+}
+
+.ide-bottom-panel.collapsed {
+  height: 38px !important;
+  overflow: hidden;
+}
+
+.ide-bottom-panel.expanded {
+  height: 480px !important;
+}
+
+.console-output-box {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 1rem;
+  font-family: 'Consolas', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.85rem;
+  color: #e6edf3;
+  background: #090d16;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.test-case-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--code-border);
+  cursor: pointer;
+}
+
+.test-case-chip.passed {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.test-case-chip.failed {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* --------------------------------------------------------------------------
+   5. Action Buttons & Toolbars
+   -------------------------------------------------------------------------- */
+.btn-ide-run {
+  background: #1f2937;
+  color: #38bdf8;
+  border: 1px solid #38bdf8;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.15s;
+}
+
+.btn-ide-run:hover {
+  background: rgba(56, 189, 248, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-ide-submit {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  border: none;
+  font-weight: 600;
+  padding: 0.45rem 1.25rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  transition: all 0.15s;
+}
+
+.btn-ide-submit:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-1px);
+}
+
+.btn-ide-reset {
+  background: transparent;
+  color: #8b949e;
+  border: 1px solid #30363d;
+  padding: 0.35rem 0.65rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.15s;
+}
+
+.btn-ide-reset:hover {
+  color: #f0f6fc;
+  border-color: #8b949e;
+}

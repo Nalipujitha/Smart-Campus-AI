@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Faculty Management - Admin Portal{% endblock %}
+{% block header_title %}Faculty Directory & Supervision{% endblock %}
+
+{% block header_actions %}
+  <button onclick="document.getElementById('addFacultyModal').style.display='block'" class="btn btn-primary btn-sm">
+    + Add Faculty Member
+  </button>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Faculty Overview Table -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Registered Faculty & Advisors</span>
+      <span class="badge badge-primary">{{ faculty_stats|length }} Faculty Members</span>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Faculty Name</th>
+            <th>Username</th>
+            <th>Department</th>
+            <th>Mentored Students</th>
+            <th>Sessions Taken</th>
+            <th>Interventions</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in faculty_stats %}
+          {% set f = item.faculty %}
+          <tr>
+            <td>
+              <div style="font-weight: 600;">{{ f.full_name }}</div>
+              <div style="font-size: 0.75rem; color: #64748b;">{{ f.email }}</div>
+            </td>
+            <td style="font-family: monospace;">{{ f.username }}</td>
+            <td>{{ f.department or 'General Academics' }}</td>
+            <td><strong>{{ item.assigned_students }}</strong> Students</td>
+            <td>{{ item.sessions_taken }} Sessions</td>
+            <td>{{ item.interventions_count }} Cases</td>
+            <td>
+              {% if f.is_active %}
+                <span class="badge badge-success">Active</span>
+              {% else %}
+                <span class="badge badge-danger">Disabled</span>
+              {% endif %}
+            </td>
+            <td>
+              <form method="POST" action="{{ url_for('admin.toggle_faculty_status', faculty_id=f.id) }}" style="display: inline;" onsubmit="return confirm('Toggle active status for {{ f.full_name }}?');">
+                <button type="submit" class="btn btn-sm {% if f.is_active %}btn-danger{% else %}btn-primary{% endif %}">
+                  {{ 'Disable' if f.is_active else 'Enable' }}
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" style="text-align: center; color: #94a3b8; padding: 2rem;">No faculty accounts registered yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Add Faculty Modal Dialog -->
+<div id="addFacultyModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 999; overflow-y: auto;">
+  <div style="background: white; border-radius: 12px; max-width: 500px; margin: 4rem auto; padding: 1.75rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">Add Faculty Account</h3>
+      <button onclick="document.getElementById('addFacultyModal').style.display='none'" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #64748b;">✕</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.faculty') }}" style="display: flex; flex-direction: column; gap: 1rem;">
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Full Name *</label>
+        <input type="text" name="full_name" placeholder="e.g. Dr. Ramesh Sharma" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+      </div>
+
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Username *</label>
+        <input type="text" name="username" placeholder="e.g. dr.sharma" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+      </div>
+
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Email Address *</label>
+        <input type="email" name="email" placeholder="faculty@campus.edu" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+      </div>
+
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Department *</label>
+        <select name="department" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+          {% for d in departments %}
+            <option value="{{ d }}">{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Initial Password</label>
+        <input type="password" name="password" value="Faculty@123" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+        <button type="button" onclick="document.getElementById('addFacultyModal').style.display='none'" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Faculty</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

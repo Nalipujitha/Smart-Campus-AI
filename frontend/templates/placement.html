@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Placement Readiness - Smart Campus Analytics{% endblock %}
+{% block header_title %}Smart Placement Preparation & Readiness Assessment{% endblock %}
+
+{% block header_actions %}
+  <a href="{{ url_for('placement.editor', student_id=student.student_id if student else None) }}" class="btn btn-primary btn-sm">
+    ⚡ Open Interactive Code Editor & Compiler
+  </a>
+  {% if current_user.role != 'Student' and all_students %}
+    <form method="GET" action="{{ url_for('placement.index') }}" style="display: flex; gap: 0.5rem;">
+      <select name="student_id" class="form-select" onchange="this.form.submit()">
+        {% for s in all_students %}
+          <option value="{{ s.student_id }}" {% if selected_student_id == s.student_id %}selected{% endif %}>
+            {{ s.student_id }} - {{ s.full_name }}
+          </option>
+        {% endfor %}
+      </select>
+    </form>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<!-- Placement Readiness Score Card -->
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-body" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem;">
+    <div>
+      <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--primary-navy);">
+        Placement Readiness: {{ student.full_name if student else 'Student' }}
+      </h2>
+      <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
+        Target Role: <strong>{{ summary.profile.target_role or 'Software Developer' }}</strong> | Status: <strong>{{ summary.profile.placement_status }}</strong>
+      </div>
+    </div>
+
+    <!-- Readiness Gauge Widget -->
+    <div style="background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem 1.75rem; text-align: center; min-width: 200px;">
+      <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Overall Readiness</div>
+      <div style="font-size: 2.2rem; font-weight: 800; color: {% if summary.readiness_percentage >= 70 %}#10b981{% elif summary.readiness_percentage >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+        {{ summary.readiness_percentage }}%
+      </div>
+      <div class="progress-bar-container" style="width: 120px; margin: 0 auto;">
+        <div class="progress-bar-fill fill-blue" style="width: {{ summary.readiness_percentage }}%;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4 Dimension Score Widgets -->
+<div class="metrics-grid">
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-blue">💻</div>
+    <div class="stat-content">
+      <div class="stat-label">Coding Score (35%)</div>
+      <div class="stat-value">{{ summary.coding_score }}%</div>
+      <div class="stat-subtext">DS & Algorithms drill</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-teal">📐</div>
+    <div class="stat-content">
+      <div class="stat-label">Aptitude Score (25%)</div>
+      <div class="stat-value">{{ summary.aptitude_score }}%</div>
+      <div class="stat-subtext">Quantitative & reasoning</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-amber">🗣️</div>
+    <div class="stat-content">
+      <div class="stat-label">Communication (20%)</div>
+      <div class="stat-value">{{ summary.communication_score }}%</div>
+      <div class="stat-subtext">Verbal & email etiquette</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-purple">🎯</div>
+    <div class="stat-content">
+      <div class="stat-label">Mock Interview (20%)</div>
+      <div class="stat-value">{{ summary.interview_score }}%</div>
+      <div class="stat-subtext">Behavioral & STAR drills</div>
+    </div>
+  </div>
+</div>
+
+<!-- Category Tabs -->
+<div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+  <a href="{{ url_for('placement.index', category='Aptitude', student_id=student.student_id if student else None) }}" class="btn {% if selected_category == 'Aptitude' %}btn-primary{% else %}btn-secondary{% endif %}">
+    📐 Aptitude Drills
+  </a>
+  <a href="{{ url_for('placement.index', category='Coding', student_id=student.student_id if student else None) }}" class="btn {% if selected_category == 'Coding' %}btn-primary{% else %}btn-secondary{% endif %}">
+    💻 Coding Challenges
+  </a>
+  <a href="{{ url_for('placement.index', category='Communication', student_id=student.student_id if student else None) }}" class="btn {% if selected_category == 'Communication' %}btn-primary{% else %}btn-secondary{% endif %}">
+    🗣️ Communication Practice
+  </a>
+  <a href="{{ url_for('placement.index', category='Interview', student_id=student.student_id if student else None) }}" class="btn {% if selected_category == 'Interview' %}btn-primary{% else %}btn-secondary{% endif %}">
+    🎯 Mock Interview Bank
+  </a>
+</div>
+
+<!-- Practice Questions Drill Bank -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">📝 {{ selected_category }} Practice Drills</span>
+  </div>
+  <div class="card-body">
+    {% if questions %}
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        {% for q in questions %}
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span class="badge badge-neutral">{{ q.topic }}</span>
+              <span class="badge {% if q.difficulty == 'Easy' %}badge-success{% elif q.difficulty == 'Medium' %}badge-warning{% else %}badge-danger{% endif %}">
+                {{ q.difficulty }}
+              </span>
+            </div>
+
+            <p style="font-size: 0.95rem; font-weight: 600; color: #0f172a; margin-bottom: 1rem;">
+              Q: {{ q.question_text }}
+            </p>
+
+            <form method="POST" action="{{ url_for('placement.submit_answer') }}">
+              <input type="hidden" name="student_id" value="{{ student.student_id if student else 'STU2024001' }}">
+              <input type="hidden" name="question_id" value="{{ q.id }}">
+              <input type="hidden" name="user_answer" id="selected_answer_{{ q.id }}" value="">
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.6rem; margin-bottom: 1rem;">
+                {% for opt in q.to_dict().options %}
+                  <button type="button" class="btn btn-secondary btn-sm opt-btn-{{ q.id }}" onclick="selectOption('{{ opt|escape }}', this, '{{ q.id }}')" style="text-align: left; justify-content: flex-start;">
+                    {{ opt }}
+                  </button>
+                {% endfor %}
+              </div>
+
+              <div style="display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn btn-primary btn-sm">Submit Answer</button>
+              </div>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 2rem; color: #64748b;">
+        No practice questions found for this category.
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/placement.js') }}"></script>
+{% endblock %}

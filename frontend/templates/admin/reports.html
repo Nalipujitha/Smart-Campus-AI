@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Institutional Reports & Exports - Admin Portal{% endblock %}
+{% block header_title %}Reports & Data Export Center{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <div class="metrics-grid">
+    <!-- Student Roster Export -->
+    <div class="card" style="margin-bottom: 0;">
+      <div class="card-header">
+        <span class="card-title">👥 Student Records Master</span>
+      </div>
+      <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; margin-bottom: 1.25rem;">
+        Export all student demographic records, departments, semesters, sections, and active enrollment statuses in CSV format.
+      </p>
+      <a href="{{ url_for('admin.export_csv', report_type='students') }}" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center;">
+        📥 Download Students CSV
+      </a>
+    </div>
+
+    <!-- Attendance Summary Export -->
+    <div class="card" style="margin-bottom: 0;">
+      <div class="card-header">
+        <span class="card-title">📅 Campus Attendance Report</span>
+      </div>
+      <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; margin-bottom: 1.25rem;">
+        Export aggregate student attendance records, present/absent/leave counts, and calculated compliance percentages.
+      </p>
+      <a href="{{ url_for('admin.export_csv', report_type='attendance') }}" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center;">
+        📥 Download Attendance CSV
+      </a>
+    </div>
+
+    <!-- Academic Records Export -->
+    <div class="card" style="margin-bottom: 0;">
+      <div class="card-header">
+        <span class="card-title">📈 Academic Performance</span>
+      </div>
+      <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; margin-bottom: 1.25rem;">
+        Export semester-wise GPA, CGPA, total credits, standing backlogs, and academic performance classifications.
+      </p>
+      <a href="{{ url_for('admin.export_csv', report_type='academics') }}" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center;">
+        📥 Download Academics CSV
+      </a>
+    </div>
+
+    <!-- Risk Analysis Export -->
+    <div class="card" style="margin-bottom: 0;">
+      <div class="card-header">
+        <span class="card-title">⚠️ Student Risk Registry</span>
+      </div>
+      <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; margin-bottom: 1.25rem;">
+        Export computed composite risk levels, multi-factor risk scores, and active trigger factors for all students.
+      </p>
+      <a href="{{ url_for('admin.export_csv', report_type='risk') }}" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center;">
+        📥 Download Risk Report CSV
+      </a>
+    </div>
+
+    <!-- Placement Directory Export -->
+    <div class="card" style="margin-bottom: 0;">
+      <div class="card-header">
+        <span class="card-title">💼 Placement & Employability</span>
+      </div>
+      <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; margin-bottom: 1.25rem;">
+        Export student placement profiles, target roles, readiness scores, coding/aptitude scores, and recruitment statuses.
+      </p>
+      <a href="{{ url_for('admin.export_csv', report_type='placement') }}" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center;">
+        📥 Download Placement CSV
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Placement Directory - Placement Portal{% endblock %}
+{% block header_title %}Student Placement Directory & Readiness Matrix{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Search & Filter Card -->
+  <div class="card" style="padding: 1.25rem;">
+    <form method="GET" action="{{ url_for('placement.students') }}" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+      <div style="flex: 2; min-width: 180px;">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 0.3rem;">Target Role</label>
+        <input type="text" name="target_role" value="{{ request.args.get('target_role', '') }}" placeholder="e.g. Software Developer, Data Analyst..." class="form-control" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+      </div>
+      <div style="flex: 1; min-width: 160px;">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 0.3rem;">Department</label>
+        <select name="department" class="form-control" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+          <option value="">All Departments</option>
+          {% for d in departments %}
+            <option value="{{ d }}" {% if selected_dept == d %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="flex: 1; min-width: 140px;">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 0.3rem;">Placement Status</label>
+        <select name="status" class="form-control" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+          <option value="">All Statuses</option>
+          <option value="Seeking" {% if selected_status == 'Seeking' %}selected{% endif %}>Seeking</option>
+          <option value="Placed" {% if selected_status == 'Placed' %}selected{% endif %}>Placed</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="{{ url_for('placement.students') }}" class="btn btn-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Placement Directory Table -->
+  <div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <span class="card-title">Student Employability Profiles</span>
+      <span style="font-size: 0.85rem; color: #64748b;">Page {{ pagination.page }} of {{ pagination.pages or 1 }}</span>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Department</th>
+            <th>Target Role</th>
+            <th>Readiness Score</th>
+            <th>Coding</th>
+            <th>Aptitude</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in profiles %}
+          <tr>
+            <td>
+              <div style="font-weight: 600;">{{ p.student.full_name if p.student else p.student_id }}</div>
+              <div style="font-size: 0.75rem; color: #64748b; font-family: monospace;">{{ p.student_id }}</div>
+            </td>
+            <td>{{ p.student.department if p.student else 'General' }}</td>
+            <td style="font-weight: 600; color: #0284c7;">{{ p.target_role }}</td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div class="progress-bar-container" style="width: 70px;">
+                  <div class="progress-bar-fill {% if p.readiness_percentage >= 70 %}fill-green{% elif p.readiness_percentage >= 50 %}fill-blue{% else %}fill-amber{% endif %}" style="width: {{ p.readiness_percentage }}%;"></div>
+                </div>
+                <strong style="font-size: 0.85rem;">{{ p.readiness_percentage }}%</strong>
+              </div>
+            </td>
+            <td>{{ p.coding_score }}%</td>
+            <td>{{ p.aptitude_score }}%</td>
+            <td>
+              {% if p.placement_status == 'Placed' %}
+                <span class="badge badge-success">🎉 Placed</span>
+              {% else %}
+                <span class="badge badge-secondary">Seeking</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{{ url_for('students.view_student', student_id=p.student_id) }}" class="btn btn-secondary btn-sm">Profile</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" style="text-align: center; color: #94a3b8; padding: 2rem;">No student profiles found matching the filters.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if pagination.pages > 1 %}
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border-top: 1px solid #f1f5f9;">
+      <div>
+        Showing {{ (pagination.page - 1) * 15 + 1 }} to {{ [pagination.page * 15, pagination.total]|min }} of {{ pagination.total }} records
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        {% if pagination.has_prev %}
+          <a href="{{ url_for('placement.students', page=pagination.prev_num, department=selected_dept, status=selected_status) }}" class="btn btn-secondary btn-sm">← Previous</a>
+        {% endif %}
+        {% if pagination.has_next %}
+          <a href="{{ url_for('placement.students', page=pagination.next_num, department=selected_dept, status=selected_status) }}" class="btn btn-secondary btn-sm">Next →</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

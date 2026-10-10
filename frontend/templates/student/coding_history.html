@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Coding History - Student Portal{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coding_lab.css') }}">
+
+<div class="student-dashboard-wrapper">
+  
+  <!-- 1. Header & Navigation -->
+  <div class="coding-lab-header">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+        <span class="badge" style="background: #2563eb; color: #fff; font-size: 0.72rem;">CODING LAB</span>
+        <span style="font-size: 0.8rem; color: #94a3b8;">Detailed Code Execution & Evaluation Log</span>
+      </div>
+      <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin: 0;">
+        My Coding History 📜
+      </h2>
+      <p style="color: #94a3b8; font-size: 0.88rem; margin: 0.25rem 0 0 0;">
+        Inspect all previous code submissions, review passed/failed test cases, compare attempts, and reload code in Coding Lab.
+      </p>
+    </div>
+
+    <!-- Actions -->
+    <div style="display: flex; gap: 0.5rem;">
+      <a href="{{ url_for('coding_lab.practice_catalog') }}" class="btn btn-primary" style="background: #2563eb; border: none; font-size: 0.88rem;">
+        🧩 Practice More Problems
+      </a>
+    </div>
+  </div>
+
+  <!-- 2. Metrics Row -->
+  <div class="metrics-grid" style="margin-bottom: 1.5rem;">
+    <!-- Total Submissions -->
+    <div class="coding-stat-card">
+      <div class="coding-stat-icon blue">⚡</div>
+      <div>
+        <div style="font-size: 0.8rem; color: #8b949e; text-transform: uppercase; font-weight: 600;">Total Submissions</div>
+        <div style="font-size: 1.6rem; font-weight: 700; color: #f0f6fc;">{{ total_submissions }}</div>
+        <div style="font-size: 0.75rem; color: #38bdf8;">Recorded attempts</div>
+      </div>
+    </div>
+
+    <!-- Accepted Solutions -->
+    <div class="coding-stat-card">
+      <div class="coding-stat-icon green">🏆</div>
+      <div>
+        <div style="font-size: 0.8rem; color: #8b949e; text-transform: uppercase; font-weight: 600;">Accepted Runs</div>
+        <div style="font-size: 1.6rem; font-weight: 700; color: #f0f6fc;">{{ total_accepted }}</div>
+        <div style="font-size: 0.75rem; color: #22c55e;">100% test suite pass</div>
+      </div>
+    </div>
+
+    <!-- Success Rate -->
+    <div class="coding-stat-card">
+      <div class="coding-stat-icon purple">📈</div>
+      <div>
+        <div style="font-size: 0.8rem; color: #8b949e; text-transform: uppercase; font-weight: 600;">Accuracy Rate</div>
+        <div style="font-size: 1.6rem; font-weight: 700; color: #f0f6fc;">{{ success_rate }}%</div>
+        <div style="font-size: 0.75rem; color: #c084fc;">Accepted vs total runs</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Filter Bar -->
+  <form method="GET" action="{{ url_for('student_workspace.coding_history_view') }}" class="practice-filter-bar">
+    <div style="flex: 1; min-width: 240px;">
+      <input 
+        type="text" 
+        name="search" 
+        value="{{ current_search }}" 
+        placeholder="🔍 Search submissions by problem name..." 
+        style="width: 100%; padding: 0.55rem 0.85rem; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; font-size: 0.88rem;"
+      >
+    </div>
+
+    <div>
+      <select name="status" style="padding: 0.55rem 0.85rem; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; font-size: 0.88rem;">
+        <option value="">All Statuses</option>
+        <option value="Accepted" {% if current_status == 'Accepted' %}selected{% endif %}>Accepted</option>
+        <option value="Wrong Answer" {% if current_status == 'Wrong Answer' %}selected{% endif %}>Wrong Answer</option>
+        <option value="Time Limit Exceeded" {% if current_status == 'Time Limit Exceeded' %}selected{% endif %}>Time Limit Exceeded</option>
+        <option value="Compilation Error" {% if current_status == 'Compilation Error' %}selected{% endif %}>Compilation Error</option>
+        <option value="Runtime Error" {% if current_status == 'Runtime Error' %}selected{% endif %}>Runtime Error</option>
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-sm" style="background: #2563eb; border: none; padding: 0.55rem 1rem;">
+      Apply Filter
+    </button>
+    {% if current_search or current_status %}
+    <a href="{{ url_for('student_workspace.coding_history_view') }}" class="btn btn-secondary btn-sm" style="padding: 0.55rem 0.75rem;">
+      Clear
+    </a>
+    {% endif %}
+  </form>
+
+  <!-- 4. Submissions History Table -->
+  <div class="card" style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1.25rem;">
+    {% if submissions %}
+    <div class="table-responsive">
+      <table class="table" style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+        <thead>
+          <tr style="border-bottom: 1px solid #30363d; color: #8b949e; text-align: left;">
+            <th style="padding: 0.75rem 1rem;">ID</th>
+            <th style="padding: 0.75rem 1rem;">Problem</th>
+            <th style="padding: 0.75rem 1rem;">Status</th>
+            <th style="padding: 0.75rem 1rem;">Cases Passed</th>
+            <th style="padding: 0.75rem 1rem;">Score</th>
+            <th style="padding: 0.75rem 1rem;">Language</th>
+            <th style="padding: 0.75rem 1rem;">Runtime</th>
+            <th style="padding: 0.75rem 1rem;">Submitted</th>
+            <th style="padding: 0.75rem 1rem; text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sub in submissions %}
+          <tr style="border-bottom: 1px solid #21262d; color: #c9d1d9;">
+            <td style="padding: 0.75rem 1rem; color: #8b949e;">#{{ sub.id }}</td>
+            <td style="padding: 0.75rem 1rem; font-weight: 600;">
+              <a href="{{ url_for('coding_lab.editor_view', identifier=sub.problem.slug if sub.problem else sub.problem_id) }}" style="color: #58a6ff; text-decoration: none;">
+                {{ sub.problem.title if sub.problem else 'Problem #' ~ sub.problem_id }}
+              </a>
+            </td>
+            <td style="padding: 0.75rem 1rem;">
+              <span class="badge" style="background: {{ '#238636' if sub.status == 'Accepted' else '#da3633' }}; color: #fff; font-size: 0.75rem;">
+                {{ sub.status }}
+              </span>
+            </td>
+            <td style="padding: 0.75rem 1rem;">
+              {{ sub.passed_test_cases }} / {{ sub.total_test_cases }}
+            </td>
+            <td style="padding: 0.75rem 1rem; font-weight: 600; color: #f0f6fc;">
+              {{ sub.score }} pts
+            </td>
+            <td style="padding: 0.75rem 1rem; text-transform: capitalize;">
+              {{ sub.language }}
+            </td>
+            <td style="padding: 0.75rem 1rem;">
+              {{ sub.execution_time_ms }} ms
+            </td>
+            <td style="padding: 0.75rem 1rem; color: #8b949e;">
+              {{ sub.submitted_at.strftime('%Y-%m-%d %H:%M') if sub.submitted_at else 'Recent' }}
+            </td>
+            <td style="padding: 0.75rem 1rem; text-align: right;">
+              <div style="display: inline-flex; gap: 0.35rem;">
+                <button 
+                  type="button" 
+                  class="btn btn-secondary btn-sm" 
+                  style="font-size: 0.75rem; padding: 0.25rem 0.55rem;"
+                  onclick="showCodeModal({{ sub.id }}, '{{ sub.problem.title if sub.problem else 'Problem'|e }}', '{{ sub.status }}', `{{ sub.code|e }}`, '{{ sub.error_message|e if sub.error_message else '' }}')"
+                >
+                  👁️ Code
+                </button>
+                <a 
+                  href="{{ url_for('coding_lab.editor_view', identifier=sub.problem.slug if sub.problem else sub.problem_id) }}" 
+                  class="btn btn-primary btn-sm" 
+                  style="background: #2563eb; border: none; font-size: 0.75rem; padding: 0.25rem 0.55rem;"
+                  title="Reopen problem in Coding Lab"
+                >
+                  Solve &rarr;
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 3rem; color: #8b949e;">
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📜</div>
+      <p style="margin: 0 0 1rem 0;">No coding submissions recorded yet.</p>
+      <a href="{{ url_for('coding_lab.practice_catalog') }}" class="btn btn-primary btn-sm" style="background: #2563eb; border: none;">
+        Solve Practice Problems Now
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Submitted Code Viewer Modal -->
+<div id="codeViewerModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; padding: 1.5rem;">
+  <div style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; width: 100%; max-width: 750px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+    
+    <!-- Modal Header -->
+    <div style="padding: 1rem 1.25rem; background: #0d1117; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h3 id="modalProblemTitle" style="font-size: 1.1rem; font-weight: 700; color: #f0f6fc; margin: 0;">
+          Submission Code
+        </h3>
+        <span id="modalSubmissionStatus" class="badge" style="font-size: 0.72rem; margin-top: 0.25rem;"></span>
+      </div>
+      <button type="button" class="btn-ide-reset" onclick="closeCodeModal()" style="font-size: 1.1rem; padding: 0.2rem 0.5rem;">✕</button>
+    </div>
+
+    <!-- Modal Body: Code block -->
+    <div style="flex: 1; overflow-y: auto; padding: 1.25rem; background: #090d16;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <span style="font-size: 0.8rem; color: #8b949e; text-transform: uppercase;">Submitted Source Code</span>
+        <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem;" onclick="copyModalCode()">📋 Copy Code</button>
+      </div>
+      <pre id="modalCodeContent" style="background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 1rem; color: #58a6ff; font-family: monospace; font-size: 0.88rem; white-space: pre-wrap; margin: 0; max-height: 380px; overflow-y: auto;"></pre>
+      
+      <div id="modalErrorContainer" style="display: none; margin-top: 1rem;">
+        <span style="font-size: 0.8rem; color: #f87171; text-transform: uppercase; font-weight: 600;">Execution Feedback</span>
+        <pre id="modalErrorContent" style="background: #1c1417; border: 1px solid #da3633; border-radius: 6px; padding: 0.75rem; color: #f85149; font-family: monospace; font-size: 0.82rem; margin-top: 0.25rem; white-space: pre-wrap;"></pre>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div style="padding: 0.75rem 1.25rem; background: #0d1117; border-top: 1px solid #30363d; display: flex; justify-content: flex-end;">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="closeCodeModal()">Close</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showCodeModal(subId, title, status, code, errorMsg) {
+  document.getElementById('modalProblemTitle').textContent = title + ' (Submission #' + subId + ')';
+  const statusBadge = document.getElementById('modalSubmissionStatus');
+  statusBadge.textContent = status;
+  statusBadge.style.background = status === 'Accepted' ? '#238636' : '#da3633';
+  statusBadge.style.color = '#fff';
+
+  document.getElementById('modalCodeContent').textContent = code;
+
+  const errContainer = document.getElementById('modalErrorContainer');
+  const errContent = document.getElementById('modalErrorContent');
+  if (errorMsg && errorMsg.trim()) {
+    errContent.textContent = errorMsg;
+    errContainer.style.display = 'block';
+  } else {
+    errContainer.style.display = 'none';
+  }
+
+  const modal = document.getElementById('codeViewerModal');
+  modal.style.display = 'flex';
+}
+
+function closeCodeModal() {
+  document.getElementById('codeViewerModal').style.display = 'none';
+}
+
+function copyModalCode() {
+  const code = document.getElementById('modalCodeContent').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    alert('Code copied to clipboard!');
+  });
+}
+</script>
+{% endblock %}

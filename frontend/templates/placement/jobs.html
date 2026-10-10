@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Job Opportunities & Drives - Placement Portal{% endblock %}
+{% block header_title %}Job Opportunities & Recruitment Postings{% endblock %}
+
+{% block header_actions %}
+  <button onclick="document.getElementById('postJobModal').style.display='block'" class="btn btn-primary btn-sm">
+    + Post New Job Drive
+  </button>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Job Postings List -->
+  <div class="metrics-grid">
+    {% for j in jobs %}
+    <div class="card" style="margin-bottom: 0;">
+      <div class="card-header" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+        <span class="card-title" style="font-size: 1.05rem; color: #0f172a;">{{ j.title }}</span>
+        <span class="badge badge-primary">{{ j.role_type }}</span>
+      </div>
+      <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem;">
+        <div>
+          <span style="color: #64748b;">Company:</span> <strong style="color: #0284c7;">{{ j.company.name if j.company else 'Recruiter' }}</strong>
+        </div>
+        <div>
+          <span style="color: #64748b;">CTC Package:</span> <strong style="color: #16a34a; font-size: 1rem;">{{ j.ctc_package }}</strong>
+        </div>
+        <div>
+          <span style="color: #64748b;">Min CGPA & Readiness:</span> <strong>{{ j.min_cgpa }} CGPA | {{ j.min_readiness }}%</strong>
+        </div>
+        <div>
+          <span style="color: #64748b;">Drive Date:</span> <strong style="color: #7c3aed;">{{ j.drive_date or 'To Be Announced' }}</strong>
+        </div>
+        <div>
+          <span style="color: #64748b;">Required Skills:</span>
+          <div style="font-size: 0.75rem; color: #334155; margin-top: 0.2rem;">{{ j.required_skills }}</div>
+        </div>
+      </div>
+      <div style="margin-top: 1.25rem; border-top: 1px solid #f1f5f9; padding-top: 0.75rem; display: flex; justify-content: space-between;">
+        <a href="{{ url_for('placement.candidates', job_id=j.id) }}" class="btn btn-secondary btn-sm" style="width: 100%; text-align: center; display: block;">
+          View Shortlisted Candidates ({{ j.applications|length }}) →
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<!-- Post Job Modal Dialog -->
+<div id="postJobModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 999; overflow-y: auto;">
+  <div style="background: white; border-radius: 12px; max-width: 550px; margin: 4rem auto; padding: 1.75rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0;">Post New Job Opportunity</h3>
+      <button onclick="document.getElementById('postJobModal').style.display='none'" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #64748b;">✕</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('placement.jobs') }}" style="display: flex; flex-direction: column; gap: 1rem;">
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Select Company *</label>
+        <select name="company_id" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+          {% for c in companies %}
+            <option value="{{ c.id }}">{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Job Title *</label>
+        <input type="text" name="title" placeholder="e.g. Associate Software Engineer" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Role Type</label>
+          <select name="role_type" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+            <option value="Full-time">Full-time</option>
+            <option value="Internship">Internship</option>
+            <option value="Co-op">Co-op</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">CTC Package *</label>
+          <input type="text" name="ctc_package" value="9.0 LPA" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Min CGPA</label>
+          <input type="number" step="0.1" name="min_cgpa" value="6.5" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Min Readiness %</label>
+          <input type="number" step="5" name="min_readiness" value="60" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Application Deadline</label>
+          <input type="date" name="application_deadline" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Drive Date</label>
+          <input type="date" name="drive_date" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+        <button type="button" onclick="document.getElementById('postJobModal').style.display='none'" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary">Post Opportunity</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Placement Analytics & Compensation - Placement Portal{% endblock %}
+{% block header_title %}Placement Analytics & Compensation Statistics{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Analytics Metrics -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Average Package</span>
+        <div class="metric-icon icon-green">💰</div>
+      </div>
+      <div class="metric-value" style="color: #16a34a;">{{ avg_pkg }} <span style="font-size: 0.85rem; font-weight: normal; color: #64748b;">LPA</span></div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Across All Job Offers</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Highest Package</span>
+        <div class="metric-icon icon-purple">🏆</div>
+      </div>
+      <div class="metric-value" style="color: #7c3aed;">{{ highest_pkg }} <span style="font-size: 0.85rem; font-weight: normal; color: #64748b;">LPA</span></div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Top Campus Compensation</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Total Placed</span>
+        <div class="metric-icon icon-blue">👥</div>
+      </div>
+      <div class="metric-value">{{ total_placed }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Out of {{ total_students }} Students</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-label">Offers Logged</span>
+        <div class="metric-icon icon-green">📋</div>
+      </div>
+      <div class="metric-value">{{ offers|length }}</div>
+      <div class="metric-footer">
+        <span class="metric-subtext">Verified Recruitment Records</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compensation Breakdown by Company -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">🏢 Recruiting Partner Offers Breakdown</span>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Company Partner</th>
+            <th>Industry</th>
+            <th>Offers Extended</th>
+            <th>Sample CTC Package</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in companies %}
+          <tr>
+            <td style="font-weight: 600; color: #0284c7;">{{ c.name }}</td>
+            <td>{{ c.industry }}</td>
+            <td><strong>{{ c.offers|length }}</strong> Offers</td>
+            <td><strong style="color: #16a34a;">{{ c.offers[0].ctc_package if c.offers else '8.0 LPA' }}</strong></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

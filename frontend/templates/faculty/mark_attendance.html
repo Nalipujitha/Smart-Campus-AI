@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Mark Class Attendance - Faculty Portal{% endblock %}
+{% block header_title %}Mark Class Attendance Session{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+  <!-- Attendance Session Details Form Header -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">📝 Session Parameters</span>
+    </div>
+
+    <form method="POST" action="{{ url_for('faculty.mark_attendance') }}" id="attendanceForm">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Class Code *</label>
+          <input type="text" name="class_code" value="{{ department[:3].upper() }}-SEM{{ selected_sem }}-{{ selected_sec }}" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+        </div>
+
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Subject *</label>
+          <select name="subject" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+            {% for sub in subjects %}
+              <option value="{{ sub }}">{{ sub }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Semester</label>
+          <input type="number" name="semester" value="{{ selected_sem }}" readonly class="form-control" style="width: 100%; padding: 0.55rem; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px;">
+        </div>
+
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Date *</label>
+          <input type="date" name="session_date" value="{{ today_date }}" required class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+        </div>
+
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">Time Slot</label>
+          <select name="time_slot" class="form-control" style="width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+            <option value="09:00 - 10:00 AM">09:00 - 10:00 AM</option>
+            <option value="10:00 - 11:00 AM">10:00 - 11:00 AM</option>
+            <option value="11:15 - 12:15 PM">11:15 - 12:15 PM</option>
+            <option value="01:30 - 02:30 PM">01:30 - 02:30 PM</option>
+            <option value="02:30 - 03:30 PM">02:30 - 03:30 PM</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Quick Batch Toggle Controls -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; background: #f8fafc; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <span style="font-size: 0.85rem; font-weight: 600; color: #334155;">Student Attendance Roster ({{ students_list|length }} Students)</span>
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="button" onclick="setAllAttendance('Present')" class="btn btn-secondary btn-sm" style="color: #16a34a;">Mark All Present</button>
+          <button type="button" onclick="setAllAttendance('Absent')" class="btn btn-secondary btn-sm" style="color: #dc2626;">Mark All Absent</button>
+        </div>
+      </div>
+
+      <!-- Student Attendance Roster Table -->
+      <div style="overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Full Name</th>
+              <th>Attendance Status</th>
+              <th>Remarks (Optional)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in students_list %}
+            <tr>
+              <td style="font-family: monospace; font-weight: 700;">{{ s.student_id }}</td>
+              <td style="font-weight: 600;">{{ s.full_name }}</td>
+              <td>
+                <div style="display: flex; gap: 0.75rem;">
+                  <label style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.85rem; cursor: pointer; color: #16a34a; font-weight: 600;">
+                    <input type="radio" name="status_{{ s.student_id }}" value="Present" checked class="att-radio" data-student="{{ s.student_id }}"> Present
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.85rem; cursor: pointer; color: #dc2626; font-weight: 600;">
+                    <input type="radio" name="status_{{ s.student_id }}" value="Absent" class="att-radio" data-student="{{ s.student_id }}"> Absent
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.85rem; cursor: pointer; color: #d97706; font-weight: 600;">
+                    <input type="radio" name="status_{{ s.student_id }}" value="On Leave" class="att-radio" data-student="{{ s.student_id }}"> Leave
+                  </label>
+                </div>
+              </td>
+              <td>
+                <input type="text" name="remarks_{{ s.student_id }}" placeholder="e.g. Approved medical slip" class="form-control" style="width: 100%; max-width: 220px; padding: 0.35rem 0.5rem; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;">
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" style="text-align: center; color: #94a3b8; padding: 2rem;">No students found for this semester/section.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; border-top: 1px solid #f1f5f9; padding-top: 1rem;">
+        <a href="{{ url_for('faculty.dashboard') }}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.5rem; font-weight: 600;">💾 Save Class Attendance</button>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<script>
+  function setAllAttendance(status) {
+    document.querySelectorAll('.att-radio').forEach(r => {
+      if (r.value === status) {
+        r.checked = true;
+      }
+    });
+  }
+</script>
+{% endblock %}

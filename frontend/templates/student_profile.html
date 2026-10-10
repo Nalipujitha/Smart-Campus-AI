@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student.full_name }} - Student Profile{% endblock %}
+{% block header_title %}Student Success Dossier & Intelligence Profile{% endblock %}
+
+{% block header_actions %}
+  {% if current_user and current_user.role in ['Admin', 'Faculty'] %}
+    <a href="{{ url_for('students.list_students') }}" class="btn btn-secondary btn-sm">← Back to Roster</a>
+  {% endif %}
+  <button type="button" class="btn btn-outline-primary btn-sm" onclick="openMongoDossier('{{ student.student_id }}')">
+    🍃 View MongoDB Atlas Document
+  </button>
+{% endblock %}
+
+{% block content %}
+
+<!-- Student Profile Header Card -->
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-body" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem;">
+    <div style="display: flex; align-items: center; gap: 1.25rem;">
+      <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #4f46e5); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700;">
+        {{ student.first_name[:1] }}{{ student.last_name[:1] }}
+      </div>
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <h2 style="font-size: 1.4rem; font-weight: 700; color: var(--primary-navy); margin: 0;">{{ student.full_name }}</h2>
+          {% if mongo_status and mongo_status.connected %}
+            <span class="badge badge-success" title="Synchronized with MongoDB Atlas ({{ mongo_status.database }})">
+              🍃 MongoDB Atlas: Synced
+            </span>
+          {% else %}
+            <span class="badge badge-info" title="Using local relational database storage">
+              📦 Database: Active
+            </span>
+          {% endif %}
+        </div>
+        <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem;">
+          ID: <strong>{{ student.student_id }}</strong> | Dept: <strong>{{ student.department }}</strong> | Year {{ student.academic_year }} (Sem {{ student.semester }}, Sec {{ student.section }})
+        </div>
+        <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.2rem;">
+          📧 {{ student.email }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Composite Success Score Widget -->
+    <div style="background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem 1.5rem; text-align: center; min-width: 220px;">
+      <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Composite Success Score</div>
+      <div style="font-size: 2.2rem; font-weight: 800; color: {% if score.success_score >= 75 %}#10b981{% elif score.success_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+        {{ score.success_score }}<span style="font-size: 1rem; color: #94a3b8;">/100</span>
+      </div>
+      <div>
+        {% if score.risk_level == 'High' %}
+          <span class="badge badge-danger">High Risk</span>
+        {% elif score.risk_level == 'Medium' %}
+          <span class="badge badge-warning">Medium Concern</span>
+        {% else %}
+          <span class="badge badge-success">Good Standing</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 7-Component Success Score Transparency Breakdown -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">🔍 Explainable Scoring Breakdown (7 Institutional Indicators)</span>
+  </div>
+  <div class="card-body">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; text-align: center;">
+      <div style="background: #f8fafc; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <div style="font-size: 0.7rem; color: #64748b; font-weight: 600;">Academic (30%)</div>
+        <div style="font-size: 1.25rem; font-weight: 700; margin: 0.25rem 0;">{{ score.academic_component }}/100</div>
+        <div class="progress-bar-container"><div class="progress-bar-fill fill-blue" style="width: {{ score.academic_component }}%;"></div></div>
+      </div>
+
+      <div style="background: #f8fafc; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <div style="font-size: 0.7rem; color: #64748b; font-weight: 600;">Attendance (20%)</div>
+        <div style="font-size: 1.25rem; font-weight: 700; margin: 0.25rem 0;">{{ score.attendance_component }}%</div>
+        <div class="progress-bar-container"><div class="progress-bar-fill {% if score.attendance_component >= 75 %}fill-green{% else %}fill-amber{% endif %}" style="width: {{ score.attendance_component }}%;"></div></div>
+      </div>
+
+      <div style="background: #f8fafc; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <div style="font-size: 0.7rem; color: #64748b; font-weight: 600;">Placement (15%)</div>
+        <div style="font-size: 1.25rem; font-weight: 700; margin: 0.25rem 0;">{{ score.placement_component }}%</div>
+        <div class="progress-bar-container"><div class="progress-bar-fill fill-blue" style="width: {{ score.placement_component }}%;"></div></div>
+      </div>
+
+      <div style="background: #f8fafc; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <div style="font-size: 0.7rem; color: #64748b; font-weight: 600;">LMS Activity (10%)</div>
+        <div style="font-size: 1.25rem; font-weight: 700; margin: 0.25rem 0;">{{ score.lms_component }}/100</div>
+        <div class="progress-bar-container"><div class="progress-bar-fill fill-blue" style="width: {{ score.lms_component }}%;"></div></div>
+      </div>
+
+      <div style="background: #f8fafc; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <div style="font-size: 0.7rem; color: #64748b; font-weight: 600;">Engagement (10%)</div>
+        <div style="font-size: 1.25rem; font-weight: 700; margin: 0.25rem 0;">{{ score.engagement_component }}/100</div>
+        <div class="progress-bar-container"><div class="progress-bar-fill fill-blue" style="width: {{ score.engagement_component }}%;"></div></div>
+      </div>
+
+      <div style="background: #f8fafc; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <div style="font-size: 0.7rem; color: #64748b; font-weight: 600;">Skills (10%)</div>
+        <div style="font-size: 1.25rem; font-weight: 700; margin: 0.25rem 0;">{{ score.skills_component }}/100</div>
+        <div class="progress-bar-container"><div class="progress-bar-fill fill-blue" style="width: {{ score.skills_component }}%;"></div></div>
+      </div>
+
+      <div style="background: #f8fafc; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <div style="font-size: 0.7rem; color: #64748b; font-weight: 600;">Faculty Support (5%)</div>
+        <div style="font-size: 1.25rem; font-weight: 700; margin: 0.25rem 0;">{{ score.feedback_component }}/100</div>
+        <div class="progress-bar-container"><div class="progress-bar-fill fill-green" style="width: {{ score.feedback_component }}%;"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Active AI Recommendations & Risk Triggers -->
+{% if recommendations %}
+<div class="card" style="border-left: 4px solid var(--accent-blue);">
+  <div class="card-header">
+    <span class="card-title">💡 Active Recommendations & Decision Support Actions</span>
+  </div>
+  <div class="card-body">
+    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+      {% for rec in recommendations %}
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong style="color: var(--primary-navy); font-size: 0.95rem;">{{ rec.title }}</strong>
+            <span class="badge {% if rec.priority == 'High' %}badge-danger{% elif rec.priority == 'Medium' %}badge-warning{% else %}badge-info{% endif %}">
+              {{ rec.priority }} Priority
+            </span>
+          </div>
+          <p style="font-size: 0.85rem; color: #475569; margin: 0.4rem 0;">{{ rec.reason }}</p>
+          <div style="font-size: 0.8rem; color: #2563eb; background: #eff6ff; padding: 0.5rem; border-radius: 6px;">
+            👉 <strong>Suggested Action:</strong> {{ rec.suggested_action }}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Academic & Attendance Tabs Grid -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.5rem;">
+  <!-- Academic Records -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">📚 Academic History & GPA</span>
+    </div>
+    <div class="card-body" style="padding: 0;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Semester</th>
+            <th>GPA</th>
+            <th>Credits</th>
+            <th>Backlogs</th>
+            <th>Standing</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in academic_records %}
+            <tr>
+              <td>Semester {{ a.semester }}</td>
+              <td><strong>{{ a.gpa }}</strong>/10.0</td>
+              <td>{{ a.credits_completed }}/{{ a.total_credits }}</td>
+              <td>
+                {% if a.backlogs_count > 0 %}
+                  <span class="badge badge-danger">{{ a.backlogs_count }} Backlog</span>
+                {% else %}
+                  <span class="badge badge-success">0</span>
+                {% endif %}
+              </td>
+              <td>{{ a.academic_standing }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Attendance History -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">🕒 Attendance Summary</span>
+    </div>
+    <div class="card-body">
+      <div style="display: flex; justify-content: space-around; text-align: center; margin-bottom: 1rem;">
+        <div>
+          <div style="font-size: 1.4rem; font-weight: 700; color: #0f172a;">{{ attendance.attendance_percentage if attendance.attendance_percentage is not none else 'N/A' }}%</div>
+          <div style="font-size: 0.75rem; color: #64748b;">Overall Att.</div>
+        </div>
+        <div>
+          <div style="font-size: 1.4rem; font-weight: 700; color: #10b981;">{{ attendance.present_count }}</div>
+          <div style="font-size: 0.75rem; color: #64748b;">Present</div>
+        </div>
+        <div>
+          <div style="font-size: 1.4rem; font-weight: 700; color: #ef4444;">{{ attendance.absent_count }}</div>
+          <div style="font-size: 0.75rem; color: #64748b;">Absent</div>
+        </div>
+        <div>
+          <div style="font-size: 1.4rem; font-weight: 700; color: #f59e0b;">{{ attendance.leave_count }}</div>
+          <div style="font-size: 0.75rem; color: #64748b;">On Leave</div>
+        </div>
+      </div>
+      <div style="font-size: 0.8rem; color: #64748b; text-align: center;">
+        Total Sessions Conducted: <strong>{{ attendance.total_sessions }}</strong> (Eligible: {{ attendance.eligible_sessions }})
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Student Feedback Eligibility & Institutional Voice Module -->
+<div class="card" style="margin-top: 1.5rem; border-left: 4px solid {% if feedback_eligibility and feedback_eligibility.is_eligible %}var(--success){% else %}var(--warning){% endif %};">
+  <div class="card-header">
+    <span class="card-title">🗣️ Student Feedback & Evaluation Eligibility (Criteria: &gt; 75% Attendance &amp; Course Activeness)</span>
+    <span class="badge {% if feedback_eligibility and feedback_eligibility.is_eligible %}badge-success{% else %}badge-warning{% endif %}">
+      {% if feedback_eligibility and feedback_eligibility.is_eligible %}Eligible to Give Feedback{% else %}Feedback Locked{% endif %}
+    </span>
+  </div>
+  <div class="card-body">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+        <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase;">1. Attendance Criterion (≥ 75%)</div>
+        <div style="font-size: 1.3rem; font-weight: 800; color: {% if feedback_eligibility and feedback_eligibility.attendance_pct >= 75 %}#10b981{% else %}#ef4444{% endif %}; margin: 0.2rem 0;">
+          {{ feedback_eligibility.attendance_pct if feedback_eligibility else 0 }}%
+        </div>
+        <span class="badge {% if feedback_eligibility and feedback_eligibility.attendance_pct >= 75 %}badge-success{% else %}badge-danger{% endif %}">
+          {% if feedback_eligibility and feedback_eligibility.attendance_pct >= 75 %}✓ Requirement Met{% else %}✗ Below 75% Cutoff{% endif %}
+        </span>
+      </div>
+
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+        <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase;">2. Course LMS Activeness (≥ 75%)</div>
+        <div style="font-size: 1.3rem; font-weight: 800; color: {% if feedback_eligibility and feedback_eligibility.lms_activeness_pct >= 75 %}#10b981{% else %}#ef4444{% endif %}; margin: 0.2rem 0;">
+          {{ feedback_eligibility.lms_activeness_pct if feedback_eligibility else 0 }}%
+        </div>
+        <span class="badge {% if feedback_eligibility and feedback_eligibility.lms_activeness_pct >= 75 %}badge-success{% else %}badge-danger{% endif %}">
+          {% if feedback_eligibility and feedback_eligibility.lms_activeness_pct >= 75 %}✓ Requirement Met{% else %}✗ Below 75% Cutoff{% endif %}
+        </span>
+      </div>
+    </div>
+
+    {% if feedback_eligibility and feedback_eligibility.is_eligible %}
+      <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 1.25rem;">
+        <h4 style="font-size: 0.95rem; font-weight: 700; color: #065f46; margin-bottom: 0.75rem;">
+          🌟 Submit Course & Institutional Feedback (Unlocked)
+        </h4>
+
+        <form method="POST" action="{{ url_for('students.submit_feedback', student_id=student.student_id) }}">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
+            <div class="form-group">
+              <label for="b_score">Teaching Quality (0-100)</label>
+              <input type="number" name="behavioral_score" id="b_score" min="0" max="100" value="90" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label for="p_score">Punctuality & Pace (0-100)</label>
+              <input type="number" name="punctuality_score" id="p_score" min="0" max="100" value="85" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label for="t_score">Lab / Practical Help (0-100)</label>
+              <input type="number" name="teamwork_score" id="t_score" min="0" max="100" value="90" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label for="i_score">Overall Experience (0-100)</label>
+              <input type="number" name="initiative_score" id="i_score" min="0" max="100" value="95" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="general_notes">Constructive Suggestions & Feedback</label>
+            <textarea name="general_notes" id="general_notes" class="form-control" placeholder="Share your suggestions on curriculum, faculty support, or campus facilities..." required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-success" style="font-weight: 600;">
+            Submit Official Feedback & Update Success Score
+          </button>
+        </form>
+      </div>
+    {% else %}
+      <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 1rem; color: #92400e; font-size: 0.88rem;">
+        {{ feedback_eligibility.reason if feedback_eligibility else '' }}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- MongoDB Atlas Dossier Modal -->
+<div id="mongoDossierModal" class="modal" style="display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.6); align-items: center; justify-content: center;">
+  <div style="background: #ffffff; border-radius: 12px; width: 90%; max-width: 780px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); overflow: hidden;">
+    <div style="padding: 1.25rem 1.5rem; background: #0f172a; color: #ffffff; display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: #ffffff; display: flex; align-items: center; gap: 0.5rem;">
+        🍃 MongoDB Atlas Integrated Document Record
+      </h3>
+      <button onclick="closeMongoDossier()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer;">&times;</button>
+    </div>
+    <div style="padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1;">
+      <div id="mongoLoading" style="text-align: center; padding: 2rem; color: #64748b;">
+        <p>Fetching unified document from MongoDB Atlas collections...</p>
+      </div>
+      <pre id="mongoDossierContent" style="display: none; background: #0f172a; color: #38bdf8; padding: 1rem; border-radius: 8px; font-size: 0.82rem; font-family: monospace; overflow-x: auto; max-height: 55vh;"></pre>
+    </div>
+    <div style="padding: 1rem 1.5rem; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end;">
+      <button type="button" class="btn btn-secondary" onclick="closeMongoDossier()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openMongoDossier(studentId) {
+  const modal = document.getElementById('mongoDossierModal');
+  const loading = document.getElementById('mongoLoading');
+  const content = document.getElementById('mongoDossierContent');
+
+  modal.style.display = 'flex';
+  loading.style.display = 'block';
+  content.style.display = 'none';
+
+  fetch(`/api/v1/mongo/students/${studentId}`)
+    .then(res => res.json())
+    .then(data => {
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      content.textContent = JSON.stringify(data, null, 2);
+    })
+    .catch(err => {
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      content.textContent = JSON.stringify({ error: 'Failed to fetch document', details: err.message }, null, 2);
+    });
+}
+
+function closeMongoDossier() {
+  document.getElementById('mongoDossierModal').style.display = 'none';
+}
+</script>
+
+{% endblock %}
