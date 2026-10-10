@@ -32,8 +32,11 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False').lower() in ('true', '1')
-    PERMANENT_SESSION_LIFETIME = 86400  # 24 hours
-    
+    # Demo Login Configuration for Evaluators / Judges
+    DEMO_LOGIN_ENABLED = os.environ.get('DEMO_LOGIN_ENABLED', 'True').lower() in ('true', '1', 'yes')
+    DEMO_ADMIN_USERNAME = os.environ.get('DEMO_ADMIN_USERNAME', 'demo_evaluator')
+    DEMO_ADMIN_PASSWORD = os.environ.get('DEMO_ADMIN_PASSWORD', '')
+
     # Upload folder
     UPLOAD_FOLDER = os.path.join(BASE_DIR, 'database', 'data')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024 # 16 MB max

@@ -60,6 +60,18 @@ def create_admin_account(username, email, password, full_name="System Administra
         print(f"Success: Administrator account '{username}' ({email}) created successfully!")
         return True
 
+def init_demo_account():
+    """
+    Safely and idempotently initializes the dedicated demo evaluator account.
+    """
+    from backend.services.demo_service import get_or_create_demo_user
+    app = create_app()
+    with app.app_context():
+        user = get_or_create_demo_user()
+        print(f"Success: Demo Evaluator account '{user.username}' ({user.email}) is active and secured!")
+        print(f"Role: {user.role} (Restricted/Read-Only Demo Mode)")
+        return True
+
 def main():
     parser = argparse.ArgumentParser(description="Smart Campus Analytics Secure Administration CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -70,6 +82,9 @@ def main():
     admin_parser.add_argument("--email", "-e", help="Admin email address")
     admin_parser.add_argument("--password", "-p", help="Admin password (leave blank for secure prompt)")
     admin_parser.add_argument("--fullname", "-f", default="System Administrator", help="Admin full name")
+
+    # init-demo-account subcommand
+    subparsers.add_parser("init-demo-account", help="Initialize or activate the dedicated demo evaluator account")
 
     args = parser.parse_args()
 
@@ -85,8 +100,12 @@ def main():
 
         success = create_admin_account(username, email, password, args.fullname)
         sys.exit(0 if success else 1)
+    elif args.command == "init-demo-account":
+        success = init_demo_account()
+        sys.exit(0 if success else 1)
     else:
         parser.print_help()
 
 if __name__ == "__main__":
     main()
+

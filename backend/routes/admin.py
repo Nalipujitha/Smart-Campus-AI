@@ -3,7 +3,7 @@ import csv
 import json
 from datetime import datetime, date, timedelta
 from collections import defaultdict
-from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, Response
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, Response, session
 from backend.routes.auth import login_required, roles_required, get_current_user
 from backend.models.user import User
 from backend.models.student import Student
@@ -16,10 +16,18 @@ from backend.services.institutional_analytics import InstitutionalAnalyticsServi
 from backend.services.success_score import SuccessScoreService
 from backend.services.attendance_service import AttendanceService
 from backend.services.risk_analysis import RiskAnalysisService
+from backend.services.demo_service import is_demo_user
 from backend.extensions import db
 from backend.utils.security import validate_password_strength, validate_username, validate_email
 
 admin_bp = Blueprint('admin', __name__)
+
+def check_demo_restriction():
+    """Returns True if current session or user is the demo evaluator."""
+    if session.get('is_demo'):
+        return True
+    user = get_current_user()
+    return is_demo_user(user)
 
 DEPARTMENTS = [
     'Computer Science & Engineering',
@@ -130,6 +138,10 @@ def students():
     user = get_current_user()
 
     if request.method == 'POST':
+        if check_demo_restriction():
+            flash("Action disabled in Demo Mode: Demo evaluator cannot enroll real student records.", "warning")
+            return redirect(url_for('admin.students'))
+
         # Add new student
         stu_id = request.form.get('student_id', '').strip().upper()
         first_name = request.form.get('first_name', '').strip()
@@ -219,6 +231,10 @@ def students():
 @login_required
 @roles_required('Admin')
 def toggle_student_status(student_id):
+    if check_demo_restriction():
+        flash("Action disabled in Demo Mode: Demo evaluator cannot modify student status.", "warning")
+        return redirect(url_for('admin.students'))
+
     user = get_current_user()
     stu = Student.query.filter_by(student_id=student_id).first_or_404()
     new_status = 'Deactivated' if stu.status != 'Deactivated' else 'Active'
@@ -245,6 +261,10 @@ def faculty():
     user = get_current_user()
 
     if request.method == 'POST':
+        if check_demo_restriction():
+            flash("Action disabled in Demo Mode: Demo evaluator cannot create faculty accounts.", "warning")
+            return redirect(url_for('admin.faculty'))
+
         username = request.form.get('username', '').strip()
         full_name = request.form.get('full_name', '').strip()
         email = request.form.get('email', '').strip().lower()
@@ -307,6 +327,10 @@ def faculty():
 @login_required
 @roles_required('Admin')
 def toggle_faculty_status(faculty_id):
+    if check_demo_restriction():
+        flash("Action disabled in Demo Mode: Demo evaluator cannot modify faculty accounts.", "warning")
+        return redirect(url_for('admin.faculty'))
+
     user = get_current_user()
     fac = User.query.get_or_404(faculty_id)
     fac.is_active = not fac.is_active
@@ -533,6 +557,10 @@ def users():
     user = get_current_user()
 
     if request.method == 'POST':
+        if check_demo_restriction():
+            flash("Action disabled in Demo Mode: Demo evaluator cannot create user accounts.", "warning")
+            return redirect(url_for('admin.users'))
+
         username = request.form.get('username', '').strip()
         full_name = request.form.get('full_name', '').strip()
         email = request.form.get('email', '').strip().lower()
@@ -607,6 +635,10 @@ def users():
 @login_required
 @roles_required('Admin')
 def toggle_user_status(user_id):
+    if check_demo_restriction():
+        flash("Action disabled in Demo Mode: Demo evaluator cannot modify user statuses.", "warning")
+        return redirect(url_for('admin.users'))
+
     admin_user = get_current_user()
     target_user = User.query.get_or_404(user_id)
 
@@ -630,6 +662,10 @@ def toggle_user_status(user_id):
 @login_required
 @roles_required('Admin')
 def reset_user_password(user_id):
+    if check_demo_restriction():
+        flash("Action disabled in Demo Mode: Demo evaluator cannot reset other users' passwords.", "warning")
+        return redirect(url_for('admin.users'))
+
     admin_user = get_current_user()
     target_user = User.query.get_or_404(user_id)
     new_temp_pass = request.form.get('new_password', '').strip()
@@ -660,6 +696,10 @@ def reset_user_password(user_id):
 @login_required
 @roles_required('Admin')
 def delete_user(user_id):
+    if check_demo_restriction():
+        flash("Action disabled in Demo Mode: Demo evaluator cannot delete user accounts.", "warning")
+        return redirect(url_for('admin.users'))
+
     admin_user = get_current_user()
     target_user = User.query.get_or_404(user_id)
 
@@ -791,6 +831,10 @@ def settings():
 @login_required
 @roles_required('Admin')
 def update_weights():
+    if check_demo_restriction():
+        flash("Action disabled in Demo Mode: Demo evaluator cannot modify institutional scoring weights.", "warning")
+        return redirect(url_for('admin.settings'))
+
     try:
         academic = float(request.form.get('weight_academic', 0.30))
         attendance = float(request.form.get('weight_attendance', 0.20))
@@ -833,6 +877,10 @@ def update_weights():
 @login_required
 @roles_required('Admin')
 def update_thresholds():
+    if check_demo_restriction():
+        flash("Action disabled in Demo Mode: Demo evaluator cannot modify institutional policy thresholds.", "warning")
+        return redirect(url_for('admin.settings'))
+
     try:
         att_warning = float(request.form.get('attendance_warning_threshold', 75.0))
         att_critical = float(request.form.get('attendance_critical_threshold', 65.0))

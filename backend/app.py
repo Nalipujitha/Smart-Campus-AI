@@ -92,7 +92,8 @@ def create_app(config_class=Config):
     def inject_globals():
         return {
             'current_user': get_current_user(),
-            'app_name': 'Smart Campus Analytics'
+            'app_name': 'Smart Campus Analytics',
+            'demo_login_enabled': app.config.get('DEMO_LOGIN_ENABLED', True)
         }
 
     # Register Blueprints
@@ -126,6 +127,13 @@ def create_app(config_class=Config):
         password = click.prompt("Admin password", hide_input=True, confirmation_prompt=True)
         fullname = click.prompt("Full name", default="System Administrator")
         create_admin_account(username, email, password, fullname)
+
+    @app.cli.command('init-demo-account')
+    def init_demo_command():
+        """CLI command to safely initialize or activate the demo evaluator account."""
+        from backend.services.demo_service import get_or_create_demo_user
+        user = get_or_create_demo_user()
+        print(f"Success: Demo Evaluator account '{user.username}' ({user.email}) is active and secured!")
 
     @app.errorhandler(404)
     def not_found_error(error):

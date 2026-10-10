@@ -7,6 +7,7 @@ from backend.models.user import User
 from backend.models.student import Student
 from backend.models.placement import PlacementProfile
 from backend.models.audit import AuditEvent
+from backend.services.demo_service import get_or_create_demo_user, is_demo_user
 from backend.utils.security import (
     validate_password_strength,
     validate_username,
@@ -357,6 +358,59 @@ def login():
             return render_template('login.html'), 401
 
     return render_template('login.html')
+
+
+# =========================================================================
+# 5b. Dedicated Demo Login Route (One-Click Evaluator Access)
+# =========================================================================
+@auth_bp.route('/demo-login', methods=['GET', 'POST'])
+@auth_bp.route('/auth/demo-login', methods=['GET', 'POST'])
+def demo_login():
+    """
+    Dedicated endpoint for judges, faculty, and evaluators to access a sandboxed
+    demo admin account in 1 click without manually entering credentials.
+    Controlled by DEMO_LOGIN_ENABLED environment variable.
+    """
+    if not current_app.config.get('DEMO_LOGIN_ENABLED', True):
+        if request.is_json or request.path.startswith('/api/'):
+            return jsonify({'error': 'Demo login is currently disabled in this environment.'}), 403
+        flash("Demo login is currently disabled in this environment.", "warning")
+        return redirect(url_for('auth.login'))
+
+    demo_user = get_or_create_demo_user()
+    if not demo_user or not demo_user.is_active:
+        if request.is_json or request.path.startswith('/api/'):
+            return jsonify({'error': 'Demo account could not be initialized.'}), 500
+        flash("Demo account could not be initialized.", "danger")
+        return redirect(url_for('auth.login'))
+
+    session.clear()
+    session['user_id'] = demo_user.id
+    session['username'] = demo_user.username
+    session['role'] = demo_user.role
+    session['full_name'] = demo_user.full_name
+    session['department'] = demo_user.department
+    session['student_id'] = demo_user.student_id
+    session['is_demo'] = True
+
+    demo_user.last_login = datetime.utcnow()
+    db.session.add(AuditEvent(
+        user_id=demo_user.id,
+        action="DEMO_LOGIN",
+        module="Auth",
+        details="Evaluator authenticated via One-Click Demo Access.",
+        ip_address=request.remote_addr
+    ))
+    db.session.commit()
+
+    flash("Welcome, Evaluator! You are logged into the Smart Campus Analytics Demo Environment.", "info")
+    if request.is_json:
+        return jsonify({
+            'message': 'Demo login successful',
+            'user': demo_user.to_dict(),
+            'redirect_url': url_for('admin.dashboard')
+        })
+    return redirect(url_for('admin.dashboard'))
 
 
 # =========================================================================
